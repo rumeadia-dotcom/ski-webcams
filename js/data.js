@@ -108,6 +108,7 @@ export const RESORTS = [
     mode: 'official',
     camCount: 5,
     officialUrl: 'https://www.konjiamresort.co.kr/ski/liveCam.dev',
+    officialUrlMobile: 'https://m.konjiamresort.co.kr/ski/skiLveCam.dev', // PC용 페이지는 휴대폰에서 보기 어렵다
     cams: [],
   },
   {
@@ -170,3 +171,9 @@ export const RESORTS = [
     cams: [],
   },
 ];
+
+// 휴대폰(iOS·Android)에서는 모바일 전용 공식 페이지가 있으면 그 주소를 쓴다.
+export function officialUrlFor(resort, os) {
+  const isPhone = os === 'ios' || os === 'android';
+  return (isPhone && resort.officialUrlMobile) || resort.officialUrl;
+}

@@ -1,4 +1,4 @@
-import { RESORTS } from './data.js';
+import { RESORTS, officialUrlFor } from './data.js';
 import { loadFavorites, toggleFavorite, sortResorts } from './favorites.js';
 import { getWeather } from './weather.js';
 import { detectEnv, browserAdvice } from './browser.js';
@@ -77,7 +77,7 @@ function camSummary(resort) {
 }
 
 function officialLink(resort, label, cls) {
-  return h('a', { class: cls, href: resort.officialUrl, target: '_blank', rel: 'noopener noreferrer' }, label, icon('external', 'icon-sm'));
+  return h('a', { class: cls, href: officialUrlFor(resort, env.os), target: '_blank', rel: 'noopener noreferrer' }, label, icon('external', 'icon-sm'));
 }
 
 // ---------- 공통 영역 ----------

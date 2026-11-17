@@ -57,3 +57,15 @@ test('데이터 파일에 IP 주소와 토큰이 없다', () => {
   assert.doesNotMatch(text, /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/);
   assert.doesNotMatch(text, /token=/i);
 });
+
+test('휴대폰에서는 모바일 전용 공식 페이지가 있으면 그 주소를 쓴다', async () => {
+  const { officialUrlFor } = await import('../js/data.js');
+  const mobile = 'https://m.konjiamresort.co.kr/ski/skiLveCam.dev';
+  const desktop = 'https://www.konjiamresort.co.kr/ski/liveCam.dev';
+  assert.equal(officialUrlFor(byId.konjiam, 'ios'), mobile);
+  assert.equal(officialUrlFor(byId.konjiam, 'android'), mobile);
+  assert.equal(officialUrlFor(byId.konjiam, 'macos'), desktop);
+  assert.equal(officialUrlFor(byId.konjiam, 'windows'), desktop);
+  assert.equal(officialUrlFor(byId.high1, 'ios'), byId.high1.officialUrl);
+  for (const r of RESORTS) if (r.officialUrlMobile) assert.match(r.officialUrlMobile, /^https:\/\//, r.id);
+});
