@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>날씨 연결 진단</title>
+  <style>
+    body { margin: 16px; font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; background: #0e151c; color: #e8eef3; }
+    h1 { font-size: 18px; }
+    pre { white-space: pre-wrap; word-break: break-all; padding: 12px; border-radius: 10px; background: #17212b; font: 12px/1.5 ui-monospace, Menlo, monospace; }
+    button { min-height: 48px; padding: 0 18px; border: 0; border-radius: 12px; background: #6cb2f7; color: #08121b; font: inherit; font-weight: 600; }
+    p { color: #97a7b6; }
+  </style>
+</head>
+<body>
+  <h1>날씨 연결 진단</h1>
+  <p>검사가 끝나면(최대 약 1분) 아래 내용을 복사하거나 화면을 캡처해서 보내 주세요.</p>
+  <button id="copy" type="button">결과 복사</button>
+  <pre id="out">검사 중…</pre>
+  <script type="module">
+    import { RESORTS } from './js/data.js';
+    import { buildWeatherUrl, getWeather } from './js/weather.js';
+    import * as weather from './js/weather.js';
+
+    const out = document.getElementById('out');
+    const lines = [];
+    const log = (text) => { lines.push(text); out.textContent = lines.join('\n'); };
+    const WAIT_MS = 20000;
+
+    // 요청 하나를 실행하고 걸린 시간과 결과를 기록한다. 20초가 지나면 기다리기를 멈춘다.
+    async function probe(name, run) {
+      const t0 = performance.now();
+      const ms = () => Math.round(performance.now() - t0);
+      let done = false;
+      const result = await Promise.race([
+        (async () => {
+          try {
+            const text = await run();
+            return `성공 ${ms()}ms ${text}`;
+          } catch (error) {
+            return `실패 ${ms()}ms ${error?.name}: ${error?.message}`;
+          } finally {
+            done = true;
+          }
+        })(),
+        new Promise((resolve) => setTimeout(() => resolve(done ? '' : `응답 없음 (${WAIT_MS / 1000}초 넘김)`), WAIT_MS)),
+      ]);
+      log(`${name}: ${result}`);
+    }
+
+    const describe = async (res) => {
+      const body = await res.text();
+      return `http ${res.status}, ${body.length}바이트`;
+    };
+    const small = 'https://api.open-meteo.com/v1/forecast?latitude=37.6&longitude=128.6&current=temperature_2m';
+    const full = buildWeatherUrl(RESORTS);
+    const bust = (url) => `${url}&_=${Date.now()}`;
+
+    let cacheInfo = '없음';
+    let storageOk = true;
+    try {
+      const cached = JSON.parse(localStorage.getItem('ski.weather'));
+      if (cached) cacheInfo = `${Math.round((Date.now() - cached.at) / 60000)}분 전 저장`;
+    } catch {
+      storageOk = false;
+    }
+    const conn = navigator.connection;
+    log(`시각: ${new Date().toString()}`);
+    log(`브라우저: ${navigator.userAgent}`);
+    log(`온라인: ${navigator.onLine}, 화면 상태: ${document.visibilityState}`);
+    log(`연결 정보: ${conn ? `${conn.effectiveType}, 절약모드 ${conn.saveData}` : '제공 안 함'}`);
+    log(`저장소 사용 가능: ${storageOk}, 날씨 캐시: ${cacheInfo}`);
+    log(`주소 길이: ${full.length}`);
+    log('---');
+
+    await probe('1 우리 사이트 파일', async () => describe(await fetch(bust('js/data.js?d=1'))));
+    await probe('2 날씨 1곳', async () => describe(await fetch(small)));
+    await probe('3 날씨 1곳(주소 변형)', async () => describe(await fetch(bust(small))));
+    await probe('4 날씨 13곳', async () => describe(await fetch(full)));
+    await probe('5 날씨 13곳(중단 신호 포함)', async () => {
+      const controller = new AbortController();
+      return describe(await fetch(full, { signal: controller.signal }));
+    });
+    await probe('6 날씨 13곳 동시 3회', async () => {
+      const results = await Promise.all([1, 2, 3].map(() => fetch(full).then(describe)));
+      return results.join(' | ');
+    });
+    await probe('7 사이트와 같은 함수', async () => {
+      const memory = { getItem: () => null, setItem: () => {} };
+      const data = await getWeather({ storage: memory, timeoutMs: WAIT_MS - 1000 });
+      return data ? `스키장 ${Object.keys(data).length}곳` : `null (원인: ${weather.lastWeatherError})`;
+    });
+    log('--- 검사 끝');
+
+    document.getElementById('copy').addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(lines.join('\n'));
+        document.getElementById('copy').textContent = '복사됨';
+      } catch {
+        document.getElementById('copy').textContent = '복사 실패 — 화면을 캡처해 주세요';
+      }
+    });
+  </script>
+</body>
+</html>
