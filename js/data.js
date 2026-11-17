@@ -51,6 +51,7 @@ export const RESORTS = [
     lon: 128.2459,
     mode: 'direct',
     officialUrl: 'https://www.wellihillipark.com/home/customer/webcam',
+    officialUrlMobile: 'https://m.wellihillipark.com/customer/webcam', // PC 주소는 휴대폰에서 모바일 홈으로 넘어간다
     cams: [
       hls('슬로프전경', welli('cam04')),
       hls('정상 / 광장', welli('cam05')),
@@ -129,6 +130,7 @@ export const RESORTS = [
     mode: 'official',
     camCount: 11,
     officialUrl: 'https://www.mdysresort.com/guide/webcam.asp',
+    officialUrlMobile: 'https://m.mdysresort.com/webcam/webcam_20151124.asp',
     cams: [],
   },
   {

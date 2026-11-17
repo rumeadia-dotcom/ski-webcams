@@ -67,5 +67,8 @@ test('휴대폰에서는 모바일 전용 공식 페이지가 있으면 그 주�
   assert.equal(officialUrlFor(byId.konjiam, 'macos'), desktop);
   assert.equal(officialUrlFor(byId.konjiam, 'windows'), desktop);
   assert.equal(officialUrlFor(byId.high1, 'ios'), byId.high1.officialUrl);
+  assert.equal(officialUrlFor(byId.welli, 'android'), 'https://m.wellihillipark.com/customer/webcam');
+  assert.equal(officialUrlFor(byId.muju, 'ios'), 'https://m.mdysresort.com/webcam/webcam_20151124.asp');
+  assert.equal(officialUrlFor(byId.welli, 'windows'), byId.welli.officialUrl);
   for (const r of RESORTS) if (r.officialUrlMobile) assert.match(r.officialUrlMobile, /^https:\/\//, r.id);
 });
