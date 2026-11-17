@@ -95,6 +95,16 @@ button { font: inherit; color: inherit; }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.top h1.brand { display: flex; align-items: center; gap: 8px; }
+.app-icon {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #cfe3f7;
+  box-shadow: 0 0 0 1px var(--line);
+  object-fit: cover;
+}
 .back {
   display: grid;
   place-items: center;
