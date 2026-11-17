@@ -187,7 +187,7 @@ function renderList() {
   mount(
     h('header', { class: 'top' },
       h('h1', { class: 'brand' }, '스키장 웹캠',
-        h('img', { class: 'app-icon', src: 'img/icon-64.png', alt: '', width: '64', height: '64' })),
+        h('img', { class: 'app-icon', src: 'img/sticker-144.png', alt: '', width: '144', height: '144' })),
     ),
     adviceBanner(),
     state.weather === null ? weatherFailure('notice') : null,
