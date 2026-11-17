@@ -1,5 +1,18 @@
 import { pickEngine, youtubeEmbedUrl } from './engine.js';
 
+const HLS_WAIT_MS = 8000;
+
+// 재생 라이브러리는 화면 표시를 막지 않도록 비동기로 불러오므로, 첫 재생 때 아직 없을 수 있다.
+function waitForHls() {
+  const script = document.querySelector('script[data-hls]');
+  if (globalThis.Hls || !script) return Promise.resolve();
+  return new Promise((resolve) => {
+    script.addEventListener('load', resolve, { once: true });
+    script.addEventListener('error', resolve, { once: true });
+    setTimeout(resolve, HLS_WAIT_MS);
+  });
+}
+
 const STALL_TIMEOUT_MS = 15000; // 이 시간 동안 아무 진행이 없으면 송출 없음으로 본다
 
 // 한 번에 영상 하나만 재생하는 플레이어.
@@ -82,36 +95,40 @@ export function createPlayer(container, { onState, preferNative = false }) {
     video.addEventListener('progress', progress);
     container.append(video);
 
-    const Hls = globalThis.Hls;
-    const engine = pickEngine({
-      hlsSupported: Boolean(Hls?.isSupported?.()),
-      nativeHls: video.canPlayType('application/vnd.apple.mpegurl') !== '',
-      preferNative,
-    });
+    const nativeHls = video.canPlayType('application/vnd.apple.mpegurl') !== '';
 
-    if (engine === 'hlsjs') {
-      hls = new Hls({ liveDurationInfinity: true });
-      hls.on(Hls.Events.ERROR, (_event, data) => {
-        if (data.fatal) fail();
+    const startEngine = () => {
+      if (!alive()) return;
+      const Hls = globalThis.Hls;
+      const engine = pickEngine({ hlsSupported: Boolean(Hls?.isSupported?.()), nativeHls, preferNative });
+
+      if (engine === 'hlsjs') {
+        hls = new Hls({ liveDurationInfinity: true });
+        hls.on(Hls.Events.ERROR, (_event, data) => {
+          if (data.fatal) fail();
+        });
+        hls.on(Hls.Events.MANIFEST_PARSED, progress);
+        hls.on(Hls.Events.FRAG_LOADED, progress);
+        hls.loadSource(cam.src);
+        hls.attachMedia(video);
+      } else if (engine === 'native') {
+        video.addEventListener('error', fail, { once: true });
+        video.src = cam.src;
+      } else {
+        stop('unsupported');
+        return;
+      }
+
+      video.play().catch((error) => {
+        // 자동 재생이 막힌 경우에만 사용자가 영상의 재생 버튼을 누르도록 넘긴다.
+        if (!alive() || hasStarted || error?.name !== 'NotAllowedError') return;
+        clearTimeout(stallTimer);
+        onState('blocked');
       });
-      hls.on(Hls.Events.MANIFEST_PARSED, progress);
-      hls.on(Hls.Events.FRAG_LOADED, progress);
-      hls.loadSource(cam.src);
-      hls.attachMedia(video);
-    } else if (engine === 'native') {
-      video.addEventListener('error', fail, { once: true });
-      video.src = cam.src;
-    } else {
-      stop('unsupported');
-      return;
-    }
+    };
 
-    video.play().catch((error) => {
-      // 자동 재생이 막힌 경우에만 사용자가 영상의 재생 버튼을 누르도록 넘긴다.
-      if (!alive() || hasStarted || error?.name !== 'NotAllowedError') return;
-      clearTimeout(stallTimer);
-      onState('blocked');
-    });
+    if (preferNative && nativeHls) startEngine();
+    else waitForHls().then(startEngine);
   }
 
   // 탭이 가려지면 데이터를 쓰지 않도록 멈춘다.

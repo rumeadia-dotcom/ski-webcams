@@ -308,7 +308,13 @@ function renderDetail(resort) {
     footer(),
   );
   // 스키장에 들어오면 첫 번째 웹캠을 바로 재생한다. 가려진 탭에서는 데이터를 쓰지 않도록 건너뛴다.
-  if (!document.hidden) autoStart?.();
+  if (!document.hidden) {
+    try {
+      autoStart?.();
+    } catch (error) {
+      console.error('자동 재생 시작 실패', error); // 재생이 안 되어도 나머지 화면은 그대로 쓴다
+    }
+  }
 }
 
 // ---------- 화면 전환 ----------
@@ -325,15 +331,30 @@ function render() {
   window.scrollTo(0, 0);
 }
 
-window.addEventListener('hashchange', render);
+let weatherLoading = false;
+
+// 날씨는 화면과 따로 불러온다. 실패했으면 다음 화면 이동 때 다시 시도한다.
+function loadWeather() {
+  if (weatherLoading || state.weather) return;
+  weatherLoading = true;
+  getWeather({ storage })
+    .catch(() => null)
+    .then((weather) => {
+      weatherLoading = false;
+      state.weather = weather;
+      // 재생 중인 영상을 끊지 않도록 상세 화면에서는 날씨 영역만 다시 그린다.
+      if (route.view === 'detail') {
+        document.getElementById('weather-slot')?.replaceChildren(weatherSection(route.resort));
+      } else {
+        renderList();
+      }
+    });
+}
+
+window.addEventListener('hashchange', () => {
+  render();
+  loadWeather();
+});
+loadWeather(); // 화면 그리기에서 오류가 나더라도 날씨는 불러오도록 먼저 시작한다
 render();
 
-getWeather({ storage }).catch(() => null).then((weather) => {
-  state.weather = weather;
-  // 재생 중인 영상을 끊지 않도록 상세 화면에서는 날씨 영역만 다시 그린다.
-  if (route.view === 'detail') {
-    document.getElementById('weather-slot')?.replaceChildren(weatherSection(route.resort));
-  } else {
-    renderList();
-  }
-});

@@ -2,6 +2,7 @@ import { RESORTS } from './data.js';
 
 const KEY = 'ski.weather';
 const TTL_MS = 30 * 60 * 1000;
+const TIMEOUT_MS = 8000; // 응답이 멈춘 채 끝나지 않는 연결을 끊는 시간
 const TODAY_INDEX = 3; // past_days=3 이므로 네 번째 날이 오늘
 
 // WMO 날씨 코드 → 화면 표시용 분류
@@ -87,13 +88,27 @@ export async function getWeather({
   storage = defaultStorage(),
   now = Date.now,
   resorts = RESORTS,
+  timeoutMs = TIMEOUT_MS,
 } = {}) {
   const cached = readCache(storage, now());
   if (cached) return cached;
+  const controller = new AbortController();
+  let timer;
+  // 연결이나 본문 읽기가 멈춰도 제한 시간이 지나면 실패로 끝낸다.
+  const timeout = new Promise((_resolve, reject) => {
+    timer = setTimeout(() => {
+      controller.abort();
+      reject(new Error('timeout'));
+    }, timeoutMs);
+  });
   try {
-    const res = await fetch(buildWeatherUrl(resorts));
-    if (!res.ok) return null;
-    const data = parseWeather(await res.json(), resorts);
+    const load = async () => {
+      const res = await fetch(buildWeatherUrl(resorts), { signal: controller.signal });
+      return res.ok ? res.json() : null;
+    };
+    const json = await Promise.race([load(), timeout]);
+    if (!json) return null;
+    const data = parseWeather(json, resorts);
     if (Object.keys(data).length === 0) return null;
     try {
       storage.setItem(KEY, JSON.stringify({ at: now(), data }));
@@ -103,5 +118,7 @@ export async function getWeather({
     return data;
   } catch {
     return null;
+  } finally {
+    clearTimeout(timer);
   }
 }

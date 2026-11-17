@@ -125,3 +125,20 @@ test('형태가 맞지 않거나 미래 시각인 캐시는 버린다', async ()
   await getWeather({ fetch: okFetch(body, counter), storage: future, now: () => 1000, resorts: two });
   assert.equal(counter.n, 2);
 });
+
+test('응답이 오지 않으면 제한 시간 뒤 null (무한 대기 금지)', async () => {
+  const hanging = (_url, { signal } = {}) =>
+    new Promise((_resolve, reject) => {
+      signal?.addEventListener('abort', () => reject(new Error('aborted')));
+    });
+  const started = Date.now();
+  const w = await getWeather({ fetch: hanging, storage: memoryStorage(), now: () => 1, resorts: two, timeoutMs: 50 });
+  assert.equal(w, null);
+  assert.ok(Date.now() - started < 2000);
+});
+
+test('응답 본문을 읽다 멈춰도 제한 시간 뒤 null', async () => {
+  const stuckBody = async () => ({ ok: true, json: () => new Promise(() => {}) });
+  const w = await getWeather({ fetch: stuckBody, storage: memoryStorage(), now: () => 1, resorts: two, timeoutMs: 50 });
+  assert.equal(w, null);
+});
