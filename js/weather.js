@@ -82,6 +82,9 @@ function readCache(storage, now) {
   return null;
 }
 
+// 마지막 실패 원인: null(성공) | 'timeout' | 'http-<상태코드>' | 'network' | 'empty'
+export let lastWeatherError = null;
+
 // 실패하면 예외 대신 null 을 돌려준다. 날씨가 없어도 사이트는 동작해야 한다.
 export async function getWeather({
   fetch = globalThis.fetch,
@@ -94,9 +97,12 @@ export async function getWeather({
   if (cached) return cached;
   const controller = new AbortController();
   let timer;
+  let timedOut = false;
+  let httpStatus = null;
   // 연결이나 본문 읽기가 멈춰도 제한 시간이 지나면 실패로 끝낸다.
   const timeout = new Promise((_resolve, reject) => {
     timer = setTimeout(() => {
+      timedOut = true;
       controller.abort();
       reject(new Error('timeout'));
     }, timeoutMs);
@@ -104,12 +110,20 @@ export async function getWeather({
   try {
     const load = async () => {
       const res = await fetch(buildWeatherUrl(resorts), { signal: controller.signal });
+      if (!res.ok) httpStatus = res.status;
       return res.ok ? res.json() : null;
     };
     const json = await Promise.race([load(), timeout]);
-    if (!json) return null;
+    if (!json) {
+      lastWeatherError = `http-${httpStatus}`;
+      return null;
+    }
     const data = parseWeather(json, resorts);
-    if (Object.keys(data).length === 0) return null;
+    if (Object.keys(data).length === 0) {
+      lastWeatherError = 'empty';
+      return null;
+    }
+    lastWeatherError = null;
     try {
       storage.setItem(KEY, JSON.stringify({ at: now(), data }));
     } catch {
@@ -117,6 +131,7 @@ export async function getWeather({
     }
     return data;
   } catch {
+    lastWeatherError = timedOut ? 'timeout' : 'network';
     return null;
   } finally {
     clearTimeout(timer);

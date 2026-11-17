@@ -142,3 +142,18 @@ test('응답 본문을 읽다 멈춰도 제한 시간 뒤 null', async () => {
   const w = await getWeather({ fetch: stuckBody, storage: memoryStorage(), now: () => 1, resorts: two, timeoutMs: 50 });
   assert.equal(w, null);
 });
+
+test('실패 원인을 기록한다', async () => {
+  const mod = await import('../js/weather.js');
+  const base = { storage: memoryStorage(), now: () => 1, resorts: two, timeoutMs: 50 };
+  await getWeather({ ...base, storage: memoryStorage(), fetch: async () => ({ ok: false, status: 429, json: async () => ({}) }) });
+  assert.equal(mod.lastWeatherError, 'http-429');
+  await getWeather({ ...base, storage: memoryStorage(), fetch: async () => { throw new TypeError('Load failed'); } });
+  assert.equal(mod.lastWeatherError, 'network');
+  await getWeather({ ...base, storage: memoryStorage(), fetch: () => new Promise(() => {}) });
+  assert.equal(mod.lastWeatherError, 'timeout');
+  await getWeather({ ...base, storage: memoryStorage(), fetch: async () => ({ ok: true, json: async () => ({ error: true }) }) });
+  assert.equal(mod.lastWeatherError, 'empty');
+  await getWeather({ ...base, storage: memoryStorage(), fetch: okFetch([location(1, 0), location(2, 0)]) });
+  assert.equal(mod.lastWeatherError, null);
+});

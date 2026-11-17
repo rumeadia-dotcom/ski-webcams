@@ -1,6 +1,6 @@
 import { RESORTS, officialUrlFor } from './data.js';
 import { loadFavorites, toggleFavorite, sortResorts } from './favorites.js';
-import { getWeather } from './weather.js';
+import { getWeather, lastWeatherError } from './weather.js';
 import { detectEnv, browserAdvice } from './browser.js';
 import { createPlayer } from './player.js';
 import { parseRoute } from './route.js';
@@ -43,6 +43,29 @@ function h(tag, attrs = {}, ...children) {
 
 // 비어 있는 자리(null)는 건너뛰고 화면을 바꾼다.
 const mount = (...nodes) => app.replaceChildren(...nodes.filter(Boolean));
+
+// 날씨를 불러오지 못했을 때의 안내. 원인을 함께 보여 준다.
+function weatherFailure(cls) {
+  const reason =
+    lastWeatherError === 'timeout' ? '응답 시간 초과'
+    : lastWeatherError === 'http-429' ? '날씨 서버 요청 한도 초과'
+    : lastWeatherError?.startsWith('http-') ? `날씨 서버 오류 ${lastWeatherError.slice(5)}`
+    : lastWeatherError === 'network' ? '날씨 서버 연결 실패'
+    : lastWeatherError === 'empty' ? '날씨 데이터 없음'
+    : null;
+  return h('p', { class: cls },
+    `날씨 정보를 불러오지 못했습니다${reason ? ` (${reason})` : ''}. `,
+    h('button', {
+      class: 'link-btn',
+      type: 'button',
+      onclick: () => {
+        state.weather = undefined;
+        redrawWeather();
+        loadWeather();
+      },
+    }, '다시 시도'),
+  );
+}
 
 const svg = (body) =>
   `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
@@ -164,7 +187,7 @@ function renderList() {
   mount(
     h('header', { class: 'top' }, h('h1', {}, '스키장 웹캠')),
     adviceBanner(),
-    state.weather === null ? h('p', { class: 'notice' }, '날씨 정보를 불러오지 못했습니다.') : null,
+    state.weather === null ? weatherFailure('notice') : null,
     h('ul', { class: 'list' }, ...rows),
     footer(),
   );
@@ -180,7 +203,7 @@ function weatherSection(resort) {
   }
   const w = state.weather?.[resort.id];
   if (!w) {
-    section.append(h('p', { class: 'muted' }, '날씨 정보를 불러오지 못했습니다.'));
+    section.append(weatherFailure('muted'));
     return section;
   }
   section.append(
@@ -342,13 +365,17 @@ function loadWeather() {
     .then((weather) => {
       weatherLoading = false;
       state.weather = weather;
-      // 재생 중인 영상을 끊지 않도록 상세 화면에서는 날씨 영역만 다시 그린다.
-      if (route.view === 'detail') {
-        document.getElementById('weather-slot')?.replaceChildren(weatherSection(route.resort));
-      } else {
-        renderList();
-      }
+      redrawWeather();
     });
+}
+
+// 재생 중인 영상을 끊지 않도록 상세 화면에서는 날씨 영역만 다시 그린다.
+function redrawWeather() {
+  if (route.view === 'detail') {
+    document.getElementById('weather-slot')?.replaceChildren(weatherSection(route.resort));
+  } else {
+    renderList();
+  }
 }
 
 window.addEventListener('hashchange', () => {

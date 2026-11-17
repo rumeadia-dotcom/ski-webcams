@@ -68,6 +68,7 @@ button { font: inherit; color: inherit; }
 .kind-cloudy, .kind-fog { color: var(--muted); }
 
 .muted { color: var(--muted); }
+.link-btn { min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--accent); text-decoration: underline; cursor: pointer; }
 .small { font-size: 13px; }
 
 /* 상단 */
