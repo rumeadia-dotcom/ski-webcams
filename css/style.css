@@ -14,7 +14,7 @@
   --stage: #0b1118;
   --stage-text: #e8eef3;
   --tap: 48px;
-  --flake: #9dc3ea;
+  --flake: #7fb0e3;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -38,7 +38,7 @@
 
 * { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
 
 body {
   margin: 0;
@@ -414,18 +414,34 @@ a { text-underline-offset: 3px; }
 .mine-from { color: var(--muted); font-size: 14px; }
 .mine-time { font-variant-numeric: tabular-nums; }
 .mine-time strong { font-size: 26px; line-height: 1.2; letter-spacing: -0.01em; }
-.more summary { display: flex; align-items: center; min-height: 44px; color: var(--accent); font-size: 14px; cursor: pointer; }
+.more summary { display: flex; align-items: center; gap: 6px; min-height: 44px; color: var(--accent); font-size: 14px; cursor: pointer; list-style: none; }
+.more summary::-webkit-details-marker { display: none; }
+/* 접힘·펼침을 알리는 꺾쇠 */
+.more summary::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  margin-top: -3px;
+  border-right: 1.8px solid currentColor;
+  border-bottom: 1.8px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.more[open] summary::after { margin-top: 3px; transform: rotate(-135deg); }
 .routes { margin: 0; padding: 0; list-style: none; }
 .routes li + li { border-top: 1px solid var(--line); }
 .route {
   position: relative;
+  margin: 0 -8px;
+  width: calc(100% + 16px);
+  padding-inline: 8px;
+  border-radius: 10px;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  width: 100%;
   min-height: 44px;
-  padding: 10px 0;
+  padding-block: 10px;
   border: 0;
   background: none;
   text-align: left;
@@ -485,6 +501,28 @@ a { text-underline-offset: 3px; }
 .day-min { color: var(--muted); }
 .day-precip { color: var(--muted); font-size: 12px; letter-spacing: -0.02em; white-space: nowrap; }
 .day-precip.is-snow { color: var(--snow); font-weight: 600; }
+
+/* 누르는 순간과 마우스를 올렸을 때의 반응. 표면색을 살짝 물들이는 한 가지 방식만 쓴다. */
+.row-link, .fav, .cam, .route, .btn-line, .icon-btn, .back, .board-part { transition: background-color 0.12s ease-out; }
+.row-link:active, .fav:active, .cam:active, .route:active, .btn-line:active, .icon-btn:active, .back:active {
+  background-color: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.btn:active { filter: brightness(0.92); }
+.board-part:active { opacity: 0.7; }
+.icon-btn, .back { border-radius: 12px; }
+@media (hover: hover) {
+  .row-link:hover, .fav:hover, .cam:hover, .route:hover, .btn-line:hover, .icon-btn:hover, .back:hover {
+    background-color: color-mix(in srgb, var(--accent) 6%, transparent);
+  }
+  .btn:hover { filter: brightness(1.06); }
+  .board-part:hover { text-decoration: underline; text-underline-offset: 4px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .more summary::after { transition: none; }
+}
+
+/* 전광판 조각을 눌러 내려왔을 때 고정된 제목 줄에 가리지 않게 한다. */
+.weather, .traffic { scroll-margin-top: 68px; }
 
 .footer { margin-top: 24px; color: var(--muted); font-size: 12px; }
 .footer p { margin: 0 0 4px; }

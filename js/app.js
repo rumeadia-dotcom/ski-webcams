@@ -454,7 +454,7 @@ function directStage(resort, firstCam = 0) {
 
 function officialStage(resort) {
   return [
-    h('section', { class: 'linkout' },
+    h('section', { class: 'linkout', 'aria-label': '웹캠' },
       h('p', {}, `웹캠 ${resort.camCount}대는 공식 페이지에서 볼 수 있습니다.`),
       officialLink(resort, '공식 웹캠 페이지 열기', 'btn'),
     ),
@@ -463,7 +463,7 @@ function officialStage(resort) {
 
 function noneStage(resort) {
   return [
-    h('section', { class: 'linkout' },
+    h('section', { class: 'linkout', 'aria-label': '웹캠' },
       h('p', {}, '이 스키장은 공개된 웹캠이 없습니다.'),
       officialLink(resort, '리조트 홈페이지 열기', 'btn'),
     ),
