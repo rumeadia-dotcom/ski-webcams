@@ -1,0 +1,535 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-18T06:18:07Z",
+  "title": "Design System: 스키장 웹캠",
+  "extensions": {
+    "colorMeta": {
+      "slope-blue": {
+        "role": "primary",
+        "displayName": "슬로프 블루",
+        "canonical": "#0a63bd",
+        "tonalRamp": [
+          "#132639",
+          "#07427e",
+          "#0a60b8",
+          "#0d7ff2",
+          "#479ef5",
+          "#81bcf8",
+          "#cadbed",
+          "#ecf2f9"
+        ]
+      },
+      "on-slope-blue": {
+        "role": "neutral",
+        "displayName": "슬로프 블루 위 글자",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#262626",
+          "#424242",
+          "#616161",
+          "#808080",
+          "#9e9e9e",
+          "#bdbdbd",
+          "#dbdbdb",
+          "#f2f2f2"
+        ]
+      },
+      "overcast-bg": {
+        "role": "neutral",
+        "displayName": "흐린 하늘 바탕",
+        "canonical": "#f3f6f9",
+        "tonalRamp": [
+          "#1f262d",
+          "#2c4258",
+          "#416181",
+          "#5580aa",
+          "#7e9ebe",
+          "#a7bdd3",
+          "#d5dbe2",
+          "#f0f2f5"
+        ]
+      },
+      "fresh-snow-surface": {
+        "role": "neutral",
+        "displayName": "새 눈 표면",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#262626",
+          "#424242",
+          "#616161",
+          "#808080",
+          "#9e9e9e",
+          "#bdbdbd",
+          "#dbdbdb",
+          "#f2f2f2"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "잉크",
+        "canonical": "#14202b",
+        "tonalRamp": [
+          "#1f272e",
+          "#2a435b",
+          "#3e6284",
+          "#5182ae",
+          "#7ba0c1",
+          "#a4bed5",
+          "#d4dce2",
+          "#f0f2f5"
+        ]
+      },
+      "lift-cable-gray": {
+        "role": "neutral",
+        "displayName": "리프트 케이블 회색",
+        "canonical": "#5a6978",
+        "tonalRamp": [
+          "#232629",
+          "#39424c",
+          "#53616f",
+          "#6d7f92",
+          "#909eac",
+          "#b3bdc6",
+          "#d8dbde",
+          "#f1f2f3"
+        ]
+      },
+      "ridge-line": {
+        "role": "neutral",
+        "displayName": "능선",
+        "canonical": "#dce4eb",
+        "tonalRamp": [
+          "#21272c",
+          "#304454",
+          "#46637b",
+          "#5d82a2",
+          "#84a0b9",
+          "#abbecf",
+          "#d6dce1",
+          "#f0f2f4"
+        ]
+      },
+      "today-wash": {
+        "role": "neutral",
+        "displayName": "오늘 물들임",
+        "canonical": "#e8f1fb",
+        "tonalRamp": [
+          "#172535",
+          "#144071",
+          "#1d5da5",
+          "#267bd9",
+          "#5a9be2",
+          "#8ebaeb",
+          "#cddbe9",
+          "#edf2f7"
+        ]
+      },
+      "snowfall-blue": {
+        "role": "secondary",
+        "displayName": "눈 내리는 파랑",
+        "canonical": "#1763b8",
+        "tonalRamp": [
+          "#162537",
+          "#0f3f76",
+          "#165dac",
+          "#1c7ae3",
+          "#539ae9",
+          "#89baf0",
+          "#ccdaeb",
+          "#edf2f8"
+        ]
+      },
+      "rain-blue": {
+        "role": "secondary",
+        "displayName": "비 파랑",
+        "canonical": "#3b6ea8",
+        "tonalRamp": [
+          "#1c2630",
+          "#224062",
+          "#325e8f",
+          "#427cbd",
+          "#709bcd",
+          "#9dbbdd",
+          "#d2dbe5",
+          "#eff2f6"
+        ]
+      },
+      "low-sun-amber": {
+        "role": "secondary",
+        "displayName": "낮은 해 호박색",
+        "canonical": "#8a5600",
+        "tonalRamp": [
+          "#3b2b11",
+          "#855300",
+          "#c27900",
+          "#ff9f00",
+          "#ffb63d",
+          "#ffcd7a",
+          "#efe0c8",
+          "#f9f4eb"
+        ]
+      },
+      "night-stage": {
+        "role": "neutral",
+        "displayName": "밤 무대",
+        "canonical": "#0b1118",
+        "tonalRamp": [
+          "#1e262e",
+          "#2a405b",
+          "#3d5e85",
+          "#507caf",
+          "#7a9bc2",
+          "#a4bbd5",
+          "#d4dbe3",
+          "#f0f2f5"
+        ]
+      },
+      "on-night-stage": {
+        "role": "neutral",
+        "displayName": "밤 무대 위 글자",
+        "canonical": "#e8eef3",
+        "tonalRamp": [
+          "#20272d",
+          "#2d4457",
+          "#42647f",
+          "#5783a8",
+          "#80a1bd",
+          "#a8bfd2",
+          "#d5dce1",
+          "#f0f2f4"
+        ]
+      },
+      "level-smooth": {
+        "role": "tertiary",
+        "displayName": "원활 초록",
+        "canonical": "#1f9d55",
+        "tonalRamp": [
+          "#183424",
+          "#166f3c",
+          "#20a258",
+          "#2ad573",
+          "#5ddf95",
+          "#90e9b6",
+          "#cee8d9",
+          "#eef7f2"
+        ]
+      },
+      "level-slow": {
+        "role": "tertiary",
+        "displayName": "서행 노랑",
+        "canonical": "#e0a800",
+        "tonalRamp": [
+          "#3b3111",
+          "#856300",
+          "#c29100",
+          "#ffbf00",
+          "#ffcf3d",
+          "#ffde7a",
+          "#efe5c8",
+          "#f9f6eb"
+        ]
+      },
+      "level-jam": {
+        "role": "tertiary",
+        "displayName": "정체 빨강",
+        "canonical": "#d93025",
+        "tonalRamp": [
+          "#351917",
+          "#711913",
+          "#a6251c",
+          "#da3025",
+          "#e36259",
+          "#ec938e",
+          "#e9cfcd",
+          "#f7eeed"
+        ]
+      },
+      "dark-slope-blue": {
+        "role": "primary",
+        "displayName": "슬로프 블루(다크)",
+        "canonical": "#6cb2f7",
+        "tonalRamp": [
+          "#132639",
+          "#07437e",
+          "#0a62b8",
+          "#0d80f2",
+          "#479ff5",
+          "#81bdf8",
+          "#cadbed",
+          "#ecf2f9"
+        ]
+      },
+      "dark-bg": {
+        "role": "neutral",
+        "displayName": "흐린 하늘 바탕(다크)",
+        "canonical": "#0e151c",
+        "tonalRamp": [
+          "#1f262d",
+          "#2c4258",
+          "#416181",
+          "#557faa",
+          "#7e9ebe",
+          "#a7bdd3",
+          "#d5dbe2",
+          "#f0f2f5"
+        ]
+      },
+      "dark-surface": {
+        "role": "neutral",
+        "displayName": "새 눈 표면(다크)",
+        "canonical": "#17212b",
+        "tonalRamp": [
+          "#20262d",
+          "#2e4256",
+          "#44617e",
+          "#597fa6",
+          "#819ebb",
+          "#a9bdd1",
+          "#d5dbe1",
+          "#f0f2f4"
+        ]
+      },
+      "dark-ink": {
+        "role": "neutral",
+        "displayName": "잉크(다크)",
+        "canonical": "#e8eef3",
+        "tonalRamp": [
+          "#20272d",
+          "#2d4457",
+          "#42647f",
+          "#5783a8",
+          "#80a1bd",
+          "#a8bfd2",
+          "#d5dce1",
+          "#f0f2f4"
+        ]
+      },
+      "dark-gray": {
+        "role": "neutral",
+        "displayName": "리프트 케이블 회색(다크)",
+        "canonical": "#97a7b6",
+        "tonalRamp": [
+          "#23262a",
+          "#37434e",
+          "#506172",
+          "#698096",
+          "#8d9faf",
+          "#b1bdc8",
+          "#d8dbdf",
+          "#f1f2f3"
+        ]
+      },
+      "dark-line": {
+        "role": "neutral",
+        "displayName": "능선(다크)",
+        "canonical": "#27343f",
+        "tonalRamp": [
+          "#21272b",
+          "#334452",
+          "#4a6378",
+          "#62829e",
+          "#87a0b5",
+          "#adbecc",
+          "#d7dce0",
+          "#f1f2f4"
+        ]
+      },
+      "dark-today-wash": {
+        "role": "neutral",
+        "displayName": "오늘 물들임(다크)",
+        "canonical": "#1e3145",
+        "tonalRamp": [
+          "#1e262f",
+          "#28425c",
+          "#3b6087",
+          "#4d7eb2",
+          "#789dc4",
+          "#a3bcd7",
+          "#d4dbe3",
+          "#eff2f5"
+        ]
+      },
+      "dark-snowfall-blue": {
+        "role": "secondary",
+        "displayName": "눈 내리는 파랑(다크)",
+        "canonical": "#8cc4ff",
+        "tonalRamp": [
+          "#11263b",
+          "#004185",
+          "#005ec2",
+          "#007cff",
+          "#3d9cff",
+          "#7abbff",
+          "#c8dbef",
+          "#ebf2f9"
+        ]
+      },
+      "dark-amber": {
+        "role": "secondary",
+        "displayName": "낮은 해 호박색(다크)",
+        "canonical": "#f2b63c",
+        "tonalRamp": [
+          "#392d14",
+          "#7c5608",
+          "#b67e0c",
+          "#efa610",
+          "#f3bb49",
+          "#f7d083",
+          "#ece1ca",
+          "#f8f4ec"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "현재 기온. 한 화면에 하나."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "내 출발지 소요 시간."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "화면 제목."
+      },
+      "row": {
+        "displayName": "Row",
+        "purpose": "목록의 스키장 이름과 기온."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "버튼, 안내 문장."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "설명, 일별 칸, 각주."
+      },
+      "stamp": {
+        "displayName": "Stamp",
+        "purpose": "기준 시각. 가장 작은 크기."
+      }
+    },
+    "shadows": [
+      {
+        "name": "floating-toast",
+        "value": "0 4px 16px rgb(0 0 0 / 0.25)",
+        "purpose": "화면 아래 잠깐 뜨는 안내에만."
+      },
+      {
+        "name": "selected-ring",
+        "value": "inset 0 0 0 1px #0a63bd",
+        "purpose": "선택된 카메라 버튼의 테두리 강조."
+      }
+    ],
+    "motion": [],
+    "breakpoints": [
+      {
+        "name": "wide",
+        "value": "600px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "주 버튼",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "화면에 하나만 두는 주 동작(공식 페이지 열기, 계속 보기).",
+      "html": "<a class=\"ds-btn\" href=\"#\">공식 웹캠 페이지 열기</a>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 18px;border-radius:12px;background:var(--accent,#0a63bd);color:var(--accent-text,#fff);font:600 16px/1.5 -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Noto Sans KR', sans-serif;text-decoration:none}.ds-btn:focus-visible{outline:2px solid var(--accent,#0a63bd);outline-offset:2px}"
+    },
+    {
+      "name": "보조 버튼",
+      "kind": "button",
+      "refersTo": "button-line",
+      "description": "다시 시도 같은 보조 동작.",
+      "html": "<button class=\"ds-btn-line\" type=\"button\">다시 시도</button>",
+      "css": ".ds-btn-line{min-height:48px;padding:0 16px;border:1px solid var(--line,#dce4eb);border-radius:12px;background:var(--surface,#fff);color:var(--text,#14202b);font:600 16px/1.5 -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Noto Sans KR', sans-serif;cursor:pointer}.ds-btn-line:focus-visible{outline:2px solid var(--accent,#0a63bd);outline-offset:2px}"
+    },
+    {
+      "name": "카메라 버튼",
+      "kind": "chip",
+      "refersTo": "camera-button",
+      "description": "카메라 선택. 2열 격자로 모두 보여 주고, 선택된 것은 파란 테두리.",
+      "html": "<div class=\"ds-cams\"><button class=\"ds-cam ds-on\" type=\"button\">옐로우 슬로프</button><button class=\"ds-cam\" type=\"button\">베이스전경</button></div>",
+      "css": ".ds-cams{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.ds-cam{display:flex;align-items:center;gap:8px;min-height:48px;padding:6px 12px;border:1px solid var(--line,#dce4eb);border-radius:12px;background:var(--surface,#fff);color:var(--text,#14202b);font:400 15px/1.3 -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Noto Sans KR', sans-serif;text-align:left;cursor:pointer}.ds-cam::before{content:'';border-left:9px solid var(--muted,#5a6978);border-top:6px solid transparent;border-bottom:6px solid transparent}.ds-cam.ds-on{border-color:var(--accent,#0a63bd);box-shadow:inset 0 0 0 1px var(--accent,#0a63bd);font-weight:600}.ds-cam.ds-on::before{border-left-color:var(--accent,#0a63bd)}.ds-cam:focus-visible{outline:2px solid var(--accent,#0a63bd);outline-offset:2px}"
+    },
+    {
+      "name": "목록 행",
+      "kind": "custom",
+      "refersTo": "list-row",
+      "description": "스키장 한 곳. 이름, 재생 방식, 기온, 눈 요약.",
+      "html": "<div class=\"ds-row\"><span class=\"ds-row-text\"><b>모나용평</b><small>바로 재생 · 카메라 5</small></span><span class=\"ds-row-w\"><b>2°</b><small>오늘 눈 0.6cm</small></span></div>",
+      "css": ".ds-row{display:flex;align-items:center;gap:12px;min-height:64px;padding:10px 16px;border:1px solid var(--line,#dce4eb);border-radius:16px;background:var(--surface,#fff);color:var(--text,#14202b);font:400 16px/1.5 -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Noto Sans KR', sans-serif}.ds-row-text{flex:1;display:flex;flex-direction:column}.ds-row b{font-size:17px;font-weight:600}.ds-row-text small{font-size:13px;color:var(--muted,#5a6978)}.ds-row-text small::before{content:'';display:inline-block;margin-right:6px;border-left:7px solid var(--accent,#0a63bd);border-top:5px solid transparent;border-bottom:5px solid transparent}.ds-row-w{display:flex;flex-direction:column;align-items:flex-end;font-variant-numeric:tabular-nums}.ds-row-w small{font-size:12px;font-weight:600;color:var(--snow,#1763b8)}"
+    },
+    {
+      "name": "내 출발지 한 줄",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "교통상황 카드. 고른 출발지의 소요 시간을 크게, 기준 시각을 작게.",
+      "html": "<section class=\"ds-card\"><div class=\"ds-head\"><h2>지금 차로 가면</h2><span>15:09 기준</span></div><p class=\"ds-mine\"><span>수원에서</span><span><strong>54분</strong> · 44km <i></i>원활</span></p></section>",
+      "css": ".ds-card{padding:14px 16px;border:1px solid var(--line,#dce4eb);border-radius:16px;background:var(--surface,#fff);color:var(--text,#14202b);font:400 16px/1.5 -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Noto Sans KR', sans-serif}.ds-head{display:flex;align-items:baseline;justify-content:space-between}.ds-head h2{margin:0;font-size:15px;font-weight:600}.ds-head span{font-size:12px;color:var(--muted,#5a6978)}.ds-mine{display:flex;align-items:baseline;justify-content:space-between;margin:8px 0 0;color:var(--muted,#5a6978);font-size:14px;font-variant-numeric:tabular-nums}.ds-mine strong{font-size:26px;color:var(--text,#14202b)}.ds-mine i{display:inline-block;width:10px;height:10px;margin:0 4px 0 8px;border-radius:50%;background:#1f9d55}"
+    },
+    {
+      "name": "오늘 칸",
+      "kind": "custom",
+      "refersTo": "day-cell-today",
+      "description": "일별 날씨의 한 칸. 오늘만 물들임 배경.",
+      "html": "<div class=\"ds-day\"><span>오늘</span><b>5°</b><span>-6°</span><em>0.9cm</em></div>",
+      "css": ".ds-day{display:inline-flex;flex-direction:column;align-items:center;gap:2px;width:52px;padding:8px 0;border-radius:10px;background:var(--today,#e8f1fb);color:var(--text,#14202b);font:600 13px/1.5 -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Noto Sans KR', sans-serif;font-variant-numeric:tabular-nums}.ds-day span:nth-child(3){color:var(--muted,#5a6978);font-weight:400}.ds-day em{font-style:normal;font-size:12px;color:var(--snow,#1763b8)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "리프트 타기 전 전광판",
+    "overview": "스키장 입구의 전광판은 지나가는 사람이 멈추지 않고도 읽을 수 있어야 한다. 이 사이트도 같다. 방문자는 카카오톡 링크를 누르고 몇 초 안에 \"지금 갈 만한가\"를 판단한 뒤 닫는다. 그래서 화면의 주인공은 영상과 숫자와 상태이고, 나머지는 모두 물러나 있다.\n\n부품은 차분하고 절제되어 있다. 그림자 없이 얇은 테두리와 둥근 모서리만으로 구역을 나누고, 강조색은 누를 수 있는 것과 지금 선택된 것에만 쓴다. 꾸밈보다 판독이 먼저다. 야외에서, 한 손으로, 장갑을 낀 채 봐도 읽히고 눌려야 한다.",
+    "keyCharacteristics": [
+      "영상과 숫자가 가장 크고, 설명은 작고 회색이다.",
+      "평평하다. 깊이는 배경과 카드의 밝기 차이, 얇은 테두리로만 만든다.",
+      "모든 데이터에 기준 시각이 붙는다.",
+      "라이트와 다크를 같은 무게로 지원한다. 시스템 설정을 따른다.",
+      "휴대폰 한 손 사용이 기준이다. 터치 영역은 48px."
+    ],
+    "rules": [
+      {
+        "name": "파랑은 누를 수 있다는 뜻이다",
+        "body": "슬로프 블루는 조작 가능한 요소와 현재 선택에만 쓴다. 장식이나 제목 강조에 쓰지 않는다.",
+        "section": "colors"
+      },
+      {
+        "name": "신호색에는 글자가 따라붙는다",
+        "body": "원활·서행·정체 점 옆에는 반드시 같은 뜻의 글자를 둔다. 색만으로 상태를 전달하지 않는다.",
+        "section": "colors"
+      },
+      {
+        "name": "12px 아래는 없다",
+        "body": "야외에서 읽어야 하므로 어떤 글자도 12px보다 작게 쓰지 않는다.",
+        "section": "typography"
+      },
+      {
+        "name": "숫자는 폭을 맞춘다",
+        "body": "기온, 시간, 거리는 `font-variant-numeric: tabular-nums`로 자릿수 폭을 고정한다.",
+        "section": "typography"
+      },
+      {
+        "name": "그림자는 떠 있는 것에만",
+        "body": "페이지 흐름 안에 있는 요소에는 그림자를 주지 않는다.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do 영상과 숫자를 가장 크게 둔다. 설명은 13px 회색으로 물린다.",
+      "Do 날씨와 교통처럼 시간이 지나면 달라지는 데이터에는 \"14:45 기준\" 같은 기준 시각을 붙인다.",
+      "Do 터치 영역을 48px로 잡는다(문장 속 링크 제외, 최소 44px).",
+      "Do 라이트와 다크 모두에서 본문 명암비 4.5:1 이상을 확인한다.",
+      "Do 신호색 점 옆에 같은 뜻의 글자를 함께 쓴다."
+    ],
+    "donts": [
+      "Don't 카드나 버튼에 그림자를 넣지 않는다.",
+      "Don't 12px보다 작은 글자를 쓰지 않는다.",
+      "Don't 슬로프 블루를 장식에 쓰지 않는다. 누를 수 있는 것과 선택된 것에만 쓴다.",
+      "Don't 카메라나 출발지처럼 고를 대상을 화면 밖에 숨기지 않는다.",
+      "Don't 웹 글꼴을 내려받지 않는다."
+    ]
+  }
+}
