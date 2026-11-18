@@ -4,10 +4,12 @@ import { getWeather, lastWeatherError } from './weather.js';
 import { detectEnv } from './browser.js';
 import { createPlayer } from './player.js';
 import { parseRoute } from './route.js';
+import { createAnalytics } from './analytics.js';
 
 // 배포용 빌드는 식별값이 붙은 아이콘 경로를 넣어 준다. 개발 중에는 원본 경로를 쓴다.
 const ICON_URL = typeof __ICON_URL__ === 'string' ? __ICON_URL__ : 'img/sticker-144.png';
 const storage = safeStorage();
+const analytics = createAnalytics();
 const app = document.getElementById('app');
 
 const state = {
@@ -100,7 +102,13 @@ function camSummary(resort) {
 }
 
 function officialLink(resort, label, cls) {
-  return h('a', { class: cls, href: officialUrlFor(resort, env.os), target: '_blank', rel: 'noopener noreferrer' }, label, icon('external', 'icon-sm'));
+  return h('a', {
+    class: cls,
+    href: officialUrlFor(resort, env.os),
+    target: '_blank',
+    rel: 'noopener noreferrer',
+    onclick: () => analytics.track('open_official', { resort_id: resort.id }),
+  }, label, icon('external', 'icon-sm'));
 }
 
 // ---------- 공통 영역 ----------
@@ -116,6 +124,7 @@ function favButton(resort, onChange) {
     html: ICONS.star,
     onclick: () => {
       state.favorites = toggleFavorite(storage, resort.id, state.favorites);
+      analytics.track(state.favorites.includes(resort.id) ? 'add_favorite' : 'remove_favorite', { resort_id: resort.id });
       onChange();
       document.querySelector(`[data-fav="${resort.id}"]`)?.focus();
     },
@@ -126,6 +135,7 @@ function footer() {
   return h('footer', { class: 'footer' },
     h('p', {}, '영상은 각 스키장이 공개한 웹캠입니다. 개장 전이나 야간에는 송출되지 않을 수 있습니다.'),
     h('p', {}, '날씨: ', h('a', { href: 'https://open-meteo.com/', target: '_blank', rel: 'noopener noreferrer' }, 'Open-Meteo'), ' (CC BY 4.0)'),
+    h('p', {}, '방문 통계를 위해 Google Analytics를 사용합니다.'),
   );
 }
 
@@ -210,6 +220,7 @@ function directStage(resort) {
   const buttons = resort.cams.map((cam) =>
     h('button', { class: 'cam', type: 'button', onclick: () => start(cam) }, cam.name));
   let current = null;
+  let startedAuto = false;
 
   const messages = {
     idle: () => [h('p', {}, '카메라를 선택하세요')],
@@ -234,6 +245,14 @@ function directStage(resort) {
   };
 
   function onState(next) {
+    // 재생 성공과 송출 없음만 기록한다. auto 는 화면에 들어오며 자동으로 시작한 재생인지 여부다.
+    if (current && (next === 'playing' || next === 'offline')) {
+      analytics.track(next === 'playing' ? 'play_camera' : 'camera_offline', {
+        resort_id: resort.id,
+        camera_name: current.name,
+        auto: startedAuto,
+      });
+    }
     overlay.replaceChildren(...messages[next]());
     overlay.hidden = next === 'playing' || next === 'blocked';
     const active = next === 'loading' || next === 'playing' || next === 'blocked';
@@ -244,14 +263,15 @@ function directStage(resort) {
     });
   }
 
-  function start(cam) {
+  function start(cam, auto = false) {
     current = cam;
+    startedAuto = auto;
     player.play(cam, { limitSec: resort.limitSec });
   }
 
   player = createPlayer(media, { onState, preferNative: env.os === 'ios' });
   onState('idle');
-  autoStart = () => start(resort.cams[0]);
+  autoStart = () => start(resort.cams[0], true);
 
   return [
     h('div', { class: 'stage' }, media, overlay),
@@ -287,6 +307,7 @@ function noneStage(resort) {
 
 function renderDetail(resort) {
   document.title = `${resort.name} · 스키장 웹캠`;
+  analytics.track('view_resort', { resort_id: resort.id, resort_mode: resort.mode });
   const stage = { direct: directStage, official: officialStage, none: noneStage }[resort.mode](resort);
   const fav = h('span', { class: 'top-fav' });
   const drawFav = () => fav.replaceChildren(favButton(resort, drawFav));
