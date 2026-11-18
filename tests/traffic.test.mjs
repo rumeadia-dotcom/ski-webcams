@@ -4,15 +4,9 @@ import { originsFor, buildDirectionsUrl, parseDirections, formatDuration, loadTr
 import { RESORTS } from '../js/data.js';
 import handler from '../api/traffic.js';
 
-test('출발 도시: 스키장 위치에 따라 3~5곳', () => {
-  for (const resort of RESORTS) {
-    const names = originsFor(resort).map((o) => o.name);
-    assert.ok(names.length >= 3 && names.length <= 5, resort.id);
-    assert.equal(new Set(names).size, names.length);
-  }
-  assert.deepEqual(originsFor({ id: 'konjiam' }).map((o) => o.name), ['서울', '인천', '수원']);
-  assert.deepEqual(originsFor({ id: 'muju' }).map((o) => o.name), ['서울', '대전', '대구', '광주']);
-  assert.deepEqual(originsFor({ id: 'eden' }).map((o) => o.name), ['부산', '울산', '대구', '창원']);
+test('출발 도시: 전국 주요 도시 8곳', () => {
+  const names = originsFor().map((o) => o.name);
+  assert.deepEqual(names, ['서울', '인천', '수원', '대전', '대구', '광주', '부산', '울산']);
 });
 
 test('길찾기 주소: 경도,위도 순서이고 요약만 요청한다', () => {
@@ -66,22 +60,20 @@ test('서버 기능: 없는 스키장은 거절한다', async () => {
   assert.equal(res.code, 404);
 });
 
-test('서버 기능: 출발 도시별 소요 시간을 돌려주고 10분 저장한다', async () => {
+test('서버 기능: 출발 도시별 소요 시간을 돌려주고 20분 저장한다', async () => {
   const calls = [];
   const res = fakeRes();
   await handler({ query: { resort: 'konjiam' } }, res, { key: 'k', fetch: okFetch(calls), now: () => 1000 });
   assert.equal(res.code, 200);
-  assert.equal(calls.length, 3);
+  assert.equal(calls.length, 8);
   assert.equal(calls[0].init.headers.Authorization, 'KakaoAK k');
-  assert.deepEqual(res.body, {
-    at: 1000,
-    routes: [
-      { from: '서울', minutes: 60, km: 50 },
-      { from: '인천', minutes: 60, km: 50 },
-      { from: '수원', minutes: 60, km: 50 },
-    ],
-  });
-  assert.match(res.headers['Cache-Control'], /s-maxage=600/);
+  assert.equal(res.body.at, 1000);
+  assert.deepEqual(res.body.routes.slice(0, 2), [
+    { from: '서울', minutes: 60, km: 50 },
+    { from: '인천', minutes: 60, km: 50 },
+  ]);
+  assert.equal(res.body.routes.length, 8);
+  assert.match(res.headers['Cache-Control'], /s-maxage=1200/);
   assert.doesNotMatch(JSON.stringify(res.body), /KakaoAK/);
 });
 

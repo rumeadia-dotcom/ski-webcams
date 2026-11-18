@@ -11,18 +11,13 @@ const CITIES = {
   gwangju: { name: '광주', lat: 35.1595, lon: 126.8526 },
   busan: { name: '부산', lat: 35.1796, lon: 129.0756 },
   ulsan: { name: '울산', lat: 35.5384, lon: 129.3114 },
-  changwon: { name: '창원', lat: 35.228, lon: 128.6811 },
 };
 
-// 경기·강원 스키장은 수도권에서, 남쪽 스키장은 가까운 광역시에서 출발한다.
-const DEFAULT_ORIGINS = ['seoul', 'incheon', 'suwon'];
-const ORIGINS_BY_RESORT = {
-  muju: ['seoul', 'daejeon', 'daegu', 'gwangju'],
-  eden: ['busan', 'ulsan', 'daegu', 'changwon'],
-};
+// 전국 주요 도시 8곳. 모든 스키장에 같은 순서로 보여 준다.
+const ORIGINS = ['seoul', 'incheon', 'suwon', 'daejeon', 'daegu', 'gwangju', 'busan', 'ulsan'];
 
-export function originsFor(resort) {
-  return (ORIGINS_BY_RESORT[resort.id] ?? DEFAULT_ORIGINS).map((key) => CITIES[key]);
+export function originsFor() {
+  return ORIGINS.map((key) => CITIES[key]);
 }
 
 // 날씨용 좌표(lat, lon)는 슬로프 위라 도로에서 멀 수 있다. 그런 스키장은 차로 도착하는 지점(drive)을 따로 둔다.

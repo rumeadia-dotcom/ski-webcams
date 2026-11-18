@@ -254,7 +254,7 @@ function weatherSection(resort) {
   return section;
 }
 
-// 교통상황: 버튼을 눌렀을 때만 불러온다(길찾기 호출 수를 아끼기 위해).
+// 교통상황: 스키장 화면에 들어오면 바로 불러온다. 서버가 20분 저장한 결과를 준다.
 function trafficSection(resort) {
   const section = h('section', { class: 'traffic', 'aria-label': '교통상황' });
   const clock = (at) => new Date(at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -262,7 +262,6 @@ function trafficSection(resort) {
 
   async function load() {
     section.replaceChildren(h('p', { class: 'muted' }, '교통상황을 불러오는 중…'));
-    analytics.track('view_traffic', { resort_id: resort.id });
     const data = await loadTraffic(resort.id);
     if (!section.isConnected) return; // 그 사이 다른 화면으로 이동했다
     if (!data) {
@@ -282,11 +281,11 @@ function trafficSection(resort) {
                 h('strong', {}, formatDuration(route.minutes)),
                 h('span', { class: 'muted' }, ` · ${route.km}km`)),
         ))),
-      h('p', { class: 'muted small' }, `각 도시 시청에서 출발하는 추천 경로입니다. 실시간 교통이 반영된 예상 시간이며 실제와 다를 수 있습니다. 제공: 카카오모빌리티`),
+      h('p', { class: 'muted small' }, `각 도시 시청에서 출발하는 추천 경로입니다. 실시간 교통이 반영된 예상 시간이며 실제와 다를 수 있습니다. 20분마다 갱신됩니다. 제공: 카카오모빌리티`),
     );
   }
 
-  section.append(button('교통상황 보기'));
+  load();
   return section;
 }
 

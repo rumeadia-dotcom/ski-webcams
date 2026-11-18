@@ -1,6 +1,7 @@
 // 교통상황 중계. /api/traffic?resort={id}
 // 카카오모빌리티 길찾기 API 키는 Vercel 환경변수(KAKAO_REST_API_KEY)에만 있고 브라우저로 나가지 않는다.
-// 응답을 CDN 이 10분 저장하므로, 방문자가 아무리 많아도 호출은 스키장마다 10분에 한 번이다.
+// 응답을 CDN 이 20분 저장하므로, 방문자가 아무리 많아도 호출은 스키장마다 20분에 한 번이다.
+// (13곳 × 하루 72번 × 도시 8곳 = 7,488건으로 무료 한도 10,000건 안)
 import { RESORTS } from '../js/data.js';
 import { originsFor, buildDirectionsUrl, parseDirections, driveTarget } from '../js/traffic.js';
 
@@ -33,6 +34,6 @@ export default async function handler(req, res, {
   }));
 
   if (routes.every((r) => r.minutes === null)) return fail(502, 'upstream');
-  res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=600, stale-while-revalidate=60');
+  res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=1200, stale-while-revalidate=60');
   res.status(200).json({ at: now(), routes });
 }
