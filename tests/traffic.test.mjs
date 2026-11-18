@@ -60,7 +60,7 @@ test('서버 기능: 없는 스키장은 거절한다', async () => {
   assert.equal(res.code, 404);
 });
 
-test('서버 기능: 출발 도시별 소요 시간을 돌려주고 20분 저장한다', async () => {
+test('서버 기능: 출발 도시별 소요 시간을 돌려주고 5분 저장한다', async () => {
   const calls = [];
   const res = fakeRes();
   await handler({ query: { resort: 'konjiam' } }, res, { key: 'k', fetch: okFetch(calls), now: () => 1000 });
@@ -73,7 +73,7 @@ test('서버 기능: 출발 도시별 소요 시간을 돌려주고 20분 저장
     { from: '인천', minutes: 60, km: 50 },
   ]);
   assert.equal(res.body.routes.length, 8);
-  assert.match(res.headers['Cache-Control'], /s-maxage=1200/);
+  assert.match(res.headers['Cache-Control'], /s-maxage=300/);
   assert.doesNotMatch(JSON.stringify(res.body), /KakaoAK/);
 });
 
