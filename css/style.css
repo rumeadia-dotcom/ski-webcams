@@ -309,6 +309,11 @@ button { font: inherit; color: inherit; }
 .route + .route { border-top: 1px solid var(--line); }
 .route-name { min-width: 0; }
 .route-time { flex: none; font-variant-numeric: tabular-nums; }
+.level { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; min-width: 3.4em; font-size: 12px; color: var(--muted); }
+.level::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--level); }
+.level-smooth { --level: #1f9d55; }
+.level-slow { --level: #e0a800; }
+.level-jam { --level: #d93025; }
 
 /* 날씨 */
 .weather {

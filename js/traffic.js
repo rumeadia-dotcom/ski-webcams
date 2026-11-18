@@ -26,17 +26,40 @@ export function buildDirectionsUrl(origin, destination) {
   const params = new URLSearchParams({
     origin: `${origin.lon},${origin.lat}`,
     destination: `${destination.lon},${destination.lat}`,
-    summary: 'true', // 경로 모양은 필요 없고 시간과 거리만 쓴다
+    summary: 'false', // 구간별 교통 상태(roads)를 받아 정체 정도를 계산한다
   });
   return `https://apis-navi.kakaomobility.com/v1/directions?${params}`;
 }
 
-// 성공한 경로면 { minutes, km }, 아니면 null
+// 정체 정도. 경로의 구간별 교통 상태를 거리로 따진다.
+// 카카오 상태 코드: 0 정보 없음, 1 정체, 2 지체, 3 서행, 4 원활, 6 사고(통행 불가)
+// 기준(우리가 정한 값): 정체·지체가 경로의 15% 이상이거나 사고 구간이 있으면 'jam',
+// 정체·지체 5% 이상 또는 서행까지 합쳐 20% 이상이면 'slow', 그 밖은 'smooth'.
+// 교통 정보가 있는 구간이 경로의 절반 미만이면 판단하지 않는다(null).
+export function congestionLevel(route) {
+  const roads = (route?.sections ?? []).flatMap((section) => section.roads ?? []);
+  let total = 0, known = 0, heavy = 0, slow = 0, blocked = false;
+  for (const road of roads) {
+    const m = road.distance ?? 0;
+    total += m;
+    if (road.traffic_state === 6) blocked = true;
+    if (road.traffic_state === 0 || road.traffic_state == null) continue;
+    known += m;
+    if (road.traffic_state === 1 || road.traffic_state === 2) heavy += m;
+    else if (road.traffic_state === 3) slow += m;
+  }
+  if (total === 0 || known / total < 0.5) return null;
+  if (blocked || heavy / total >= 0.15) return 'jam';
+  if (heavy / total >= 0.05 || (heavy + slow) / total >= 0.2) return 'slow';
+  return 'smooth';
+}
+
+// 성공한 경로면 { minutes, km, level }, 아니면 null
 export function parseDirections(json) {
   const route = json?.routes?.[0];
   const summary = route?.summary;
   if (!route || route.result_code !== 0 || typeof summary?.duration !== 'number') return null;
-  return { minutes: Math.round(summary.duration / 60), km: Math.round(summary.distance / 1000) };
+  return { minutes: Math.round(summary.duration / 60), km: Math.round(summary.distance / 1000), level: congestionLevel(route) };
 }
 
 export function formatDuration(minutes) {

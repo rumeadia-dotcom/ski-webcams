@@ -254,6 +254,8 @@ function weatherSection(resort) {
   return section;
 }
 
+const LEVEL_LABEL = { smooth: '원활', slow: '서행', jam: '정체' };
+
 // 교통상황: 스키장 화면에 들어오면 바로 불러온다. 서버가 5분 저장한 결과를 준다.
 function trafficSection(resort) {
   const section = h('section', { class: 'traffic', 'aria-label': '교통상황' });
@@ -279,9 +281,12 @@ function trafficSection(resort) {
             ? h('span', { class: 'muted' }, '확인 안 됨')
             : h('span', { class: 'route-time' },
                 h('strong', {}, formatDuration(route.minutes)),
-                h('span', { class: 'muted' }, ` · ${route.km}km`)),
+                h('span', { class: 'muted' }, ` · ${route.km}km`),
+                LEVEL_LABEL[route.level]
+                  ? h('span', { class: `level level-${route.level}` }, LEVEL_LABEL[route.level])
+                  : null),
         ))),
-      h('p', { class: 'muted small' }, `각 도시 시청에서 출발하는 추천 경로입니다. 실시간 교통이 반영된 예상 시간이며 실제와 다를 수 있습니다. 5분마다 갱신됩니다. 제공: 카카오모빌리티`),
+      h('p', { class: 'muted small' }, `각 도시 시청에서 출발하는 추천 경로입니다. 실시간 교통이 반영된 예상 시간이며 실제와 다를 수 있습니다. 원활·서행·정체는 경로에서 막히는 구간의 비율로 나눈 것입니다. 5분마다 갱신됩니다. 제공: 카카오모빌리티`),
     );
   }
 

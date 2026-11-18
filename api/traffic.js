@@ -28,9 +28,9 @@ export default async function handler(req, res, {
         signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
       });
       const parsed = upstream.ok ? parseDirections(await upstream.json()) : null;
-      return { from: origin.name, minutes: parsed?.minutes ?? null, km: parsed?.km ?? null };
+      return { from: origin.name, minutes: parsed?.minutes ?? null, km: parsed?.km ?? null, level: parsed?.level ?? null };
     } catch {
-      return { from: origin.name, minutes: null, km: null };
+      return { from: origin.name, minutes: null, km: null, level: null };
     }
   }));
 
