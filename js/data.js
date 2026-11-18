@@ -23,6 +23,14 @@ export const RESORTS = [
     cams: [
       hls('옐로우 슬로프', yongpyong('cam11')),
       hls('베이스전경 / 레드 슬로프', yongpyong('cam08')),
+      // 아래 6대는 공식 웹캠 페이지 목록에는 없지만 같은 영상 서버에서 송출 중인 슬로프 카메라다(2026-11-18 확인).
+      // 이름은 영상을 보고 붙였다. 송출이 끊기면 화면에 "현재 송출이 없습니다"로 나온다.
+      hls('골드밸리 상단', yongpyong('cam03')),
+      hls('골드 하단', yongpyong('cam09')),
+      hls('메가그린', yongpyong('cam04')),
+      hls('레인보우 상단', yongpyong('cam06')),
+      hls('레인보우 하단', yongpyong('cam07')),
+      hls('핑크', yongpyong('cam10')),
       hls('발왕산 氣 스카이워크', yongpyong('cam01')),
       hls('발왕산 천년주목숲길', yongpyong('cam02')),
       hls('모나용평 진입로', yongpyong('cam05')),

@@ -18,7 +18,7 @@ test('방식별 분류', () => {
 });
 
 test('직접 재생 카메라 수와 주소', () => {
-  const counts = { yongpyong: 5, phoenix: 7, welli: 6, jisan: 5, alpensia: 1, oakvalley: 5 };
+  const counts = { yongpyong: 11, phoenix: 7, welli: 6, jisan: 5, alpensia: 1, oakvalley: 5 };
   for (const [id, n] of Object.entries(counts)) {
     assert.equal(byId[id].cams.length, n, id);
     for (const cam of byId[id].cams) {
