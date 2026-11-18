@@ -309,7 +309,6 @@ a { text-underline-offset: 3px; }
   gap: 0 18px;
   min-height: 44px;
   padding: 0 16px;
-  border-radius: 16px;
   background: var(--stage);
   color: var(--stage-text);
   font-size: 15px;
@@ -330,6 +329,7 @@ a { text-underline-offset: 3px; }
   cursor: pointer;
 }
 .board-part.is-wait { color: #9fb0bf; font-weight: 400; cursor: default; }
+.board-part.is-hint { color: #8cc4ff; text-decoration: underline; text-underline-offset: 4px; }
 .board .level { color: #c3cfd9; }
 .board :focus-visible { outline-color: #8cc4ff; }
 
@@ -462,6 +462,7 @@ a { text-underline-offset: 3px; }
   background: var(--surface);
 }
 .weather p { margin: 0; }
+.weather.is-loading { min-height: 270px; }
 .now { display: flex; align-items: center; gap: 12px; }
 .now-temp { font-size: 40px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
 .now-text { display: flex; flex-direction: column; font-size: 14px; color: var(--muted); }

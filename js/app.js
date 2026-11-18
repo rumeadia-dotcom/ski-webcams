@@ -7,6 +7,7 @@ import { parseRoute } from './route.js';
 import { createAnalytics } from './analytics.js';
 import { share, shareUrl } from './share.js';
 import { loadTraffic, formatDuration, loadOrigin, saveOrigin, arrangeRoutes } from './traffic.js';
+import { josa } from './text.js';
 
 // 배포용 빌드는 식별값이 붙은 아이콘 경로를 넣어 준다. 개발 중에는 원본 경로를 쓴다.
 const BUILT = typeof __ICON_URL__ === 'string';
@@ -154,7 +155,7 @@ function favButton(resort, onChange) {
       // 행이 맨 위로 옮겨가도 보던 자리를 지킨다.
       document.querySelector(`[data-fav="${resort.id}"]`)?.focus({ preventScroll: true });
       window.scrollTo(0, y);
-      toast(added ? `${resort.name}을(를) 목록 맨 위에 올렸습니다` : `${resort.name} 즐겨찾기를 해제했습니다`);
+      toast(added ? `${josa(resort.name, '을', '를')} 목록 맨 위에 올렸습니다` : `${resort.name} 즐겨찾기를 해제했습니다`);
     },
   });
 }
@@ -246,6 +247,7 @@ function renderList() {
 function weatherSection(resort) {
   const section = h('section', { class: 'weather', 'aria-label': '날씨' }, h('h2', { class: 'sr-only' }, '날씨'));
   if (state.weather === undefined) {
+    section.classList.add('is-loading'); // 불러온 뒤의 크기만큼 자리를 잡아 둔다
     section.append(h('p', { class: 'muted' }, '날씨를 불러오는 중…'));
     return section;
   }
@@ -275,7 +277,7 @@ function weatherSection(resort) {
       h('span', { class: 'now-temp' }, temp(w.temp)),
       h('span', { class: 'now-text' },
         h('strong', {}, KIND_LABEL[w.kind]),
-        h('span', {}, `지금 강수량 ${amount(w.precip)}mm`),
+        w.precip > 0 ? h('span', {}, `지금 강수량 ${amount(w.precip)}mm`) : null,
       ),
       w.time ? h('span', { class: 'stamp' }, `${w.time} 기준`) : null,
     ),
@@ -296,7 +298,7 @@ const LEVEL_LABEL = { smooth: '원활', slow: '서행', jam: '정체' };
 // 조각을 누르면 해당 구역으로 내려간다. 교통은 출발지를 고른 사람에게만 나온다.
 const board = { el: null, resort: null, mine: null };
 function drawBoard() {
-  if (!board.el?.isConnected) return;
+  if (!board.el?.isConnected) return; // 영상이 없는 스키장에는 전광판 한 줄이 없다
   const jump = (selector) => () => document.querySelector(selector)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   const weather = boardWeather(state.weather?.[board.resort.id], KIND_LABEL);
   const parts = [];
@@ -312,6 +314,10 @@ function drawBoard() {
       LEVEL_LABEL[board.mine.level]
         ? h('span', { class: `level level-${board.mine.level}` }, h('span', { class: 'sr-only' }, ', '), LEVEL_LABEL[board.mine.level])
         : null));
+  }
+  // 출발지를 아직 고르지 않은 사람에게는 소요 시간 기능이 있다는 것을 여기서 알린다.
+  if (!board.mine && !loadOrigin(storage)) {
+    parts.push(h('button', { class: 'board-part is-hint', type: 'button', onclick: jump('.traffic') }, '출발지 고르기'));
   }
   board.el.hidden = parts.length === 0;
   board.el.replaceChildren(...parts);
@@ -342,7 +348,7 @@ function trafficSection(resort) {
       analytics.track('set_origin', { origin });
       draw(data);
       section.querySelector('.mine')?.focus();
-      toast(`${origin}을(를) 내 출발지로 기억했습니다`);
+      toast(`${origin} 출발로 기억했습니다`);
     };
     const list = h('ul', { class: 'routes' }, ...others.map((route) =>
       h('li', {},
@@ -480,7 +486,8 @@ function renderDetail(resort, firstCam) {
   const weatherSlot = h('div', { id: 'weather-slot' }, weatherSection(resort));
   board.resort = resort;
   board.mine = null;
-  board.el = h('div', { class: `board${resort.mode === 'direct' ? ' is-attached' : ''}`, role: 'group', 'aria-label': '지금 상황 요약' });
+  // 전광판 한 줄은 영상에 붙어 있을 때만 둔다. 영상이 없으면 바로 아래 날씨 카드와 내용이 겹친다.
+  board.el = resort.mode === 'direct' ? h('div', { class: 'board is-attached', role: 'group', 'aria-label': '지금 상황 요약' }) : null;
 
   mount(
     h('header', { class: 'top' },
@@ -488,7 +495,7 @@ function renderDetail(resort, firstCam) {
       h('h1', { tabindex: '-1' }, resort.name),
       h('span', { class: 'top-actions' }, shareButton(resort), fav),
     ),
-    h('main', { class: 'detail' }, ...(resort.mode === 'direct' ? [stage[0], board.el, ...stage.slice(1)] : [board.el, ...stage]), weatherSlot, trafficSection(resort)),
+    h('main', { class: 'detail' }, ...(board.el ? [stage[0], board.el, ...stage.slice(1)] : stage), weatherSlot, trafficSection(resort)),
     footer(),
   );
   drawBoard();
