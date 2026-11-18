@@ -267,14 +267,22 @@ button { font: inherit; color: inherit; }
 .now-text { display: flex; flex-direction: column; font-size: 14px; color: var(--muted); }
 .now-text strong { color: var(--text); font-size: 16px; }
 
+/* 한 화면에 7일이 보이고, 나머지는 좌우로 밀어서 본다. */
 .days {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: max(44px, calc((100% - 12px) / 7));
   gap: 2px;
   margin: 16px 0 12px;
-  padding: 0;
+  padding: 0 0 6px;
   list-style: none;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
+.day { scroll-snap-align: start; }
 .day {
   display: flex;
   flex-direction: column;

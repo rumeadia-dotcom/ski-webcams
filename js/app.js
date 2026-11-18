@@ -198,7 +198,7 @@ function weatherSection(resort) {
         h('span', {}, `지금 강수량 ${amount(w.precip)}mm`),
       ),
     ),
-    h('ol', { class: 'days' }, ...w.days.map((day) =>
+    h('ol', { class: 'days', tabindex: '0', 'aria-label': '일별 날씨, 좌우로 스크롤' }, ...w.days.map((day) =>
       h('li', { class: `day${day.isToday ? ' is-today' : ''}` },
         h('span', { class: 'day-name' }, dayLabel(day)),
         icon(day.kind, `kind-${day.kind}`),
@@ -209,7 +209,7 @@ function weatherSection(resort) {
           : h('span', { class: 'day-precip' }, day.precip > 0 ? `${amount(day.precip)}mm` : '-'),
       ),
     )),
-    h('p', { class: 'muted small' }, '지난 3일과 앞으로 3일입니다. mm는 강수량, cm는 적설량입니다. 예보 모델 값이라 스키장 발표 수치와 다를 수 있습니다.'),
+    h('p', { class: 'muted small' }, '지난 3일부터 앞으로 7일까지입니다. 옆으로 밀어서 더 볼 수 있습니다. mm는 강수량, cm는 적설량입니다. 예보 모델 값이라 스키장 발표 수치와 다를 수 있습니다.'),
   );
   return section;
 }

@@ -1,6 +1,6 @@
 import { RESORTS } from './data.js';
 
-const KEY = 'ski.weather';
+const KEY = 'ski.weather.v2'; // 기간이 바뀌면 이름을 바꿔 예전 저장본을 버린다
 const TTL_MS = 30 * 60 * 1000;
 const TIMEOUT_MS = 8000; // 응답이 멈춘 채 끝나지 않는 연결을 끊는 시간
 const TODAY_INDEX = 3; // past_days=3 이므로 네 번째 날이 오늘
@@ -22,7 +22,7 @@ export function buildWeatherUrl(resorts) {
     current: 'temperature_2m,precipitation,rain,snowfall,weather_code',
     daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum',
     past_days: '3',
-    forecast_days: '4',
+    forecast_days: '8', // 오늘 + 앞으로 7일
     timezone: 'Asia/Seoul',
   });
   return `https://api.open-meteo.com/v1/forecast?${params}`;
