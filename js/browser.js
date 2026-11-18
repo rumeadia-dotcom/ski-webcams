@@ -1,5 +1,4 @@
-// 접속 환경 판별과 추천 브라우저 안내.
-// 추천 근거: 영상(HLS)을 iOS 는 Safari 가 자체 재생하고, 그 외에는 크로미움 계열에서 재생 라이브러리로 재생한다.
+// 접속 환경 판별. 재생 방식(iOS 는 자체 재생 우선)과 모바일 전용 공식 페이지 선택에 쓴다.
 
 export function detectEnv(ua = '', maxTouchPoints = 0) {
   ua = String(ua ?? '');
@@ -23,27 +22,4 @@ export function detectEnv(ua = '', maxTouchPoints = 0) {
   else if (/Safari\//.test(ua) && /Version\//.test(ua)) browser = 'safari';
 
   return { os, browser, inApp };
-}
-
-const ALLOWED = {
-  ios: ['safari'],
-  android: ['chrome', 'samsung', 'edge'],
-  macos: ['safari', 'chrome', 'edge'],
-  windows: ['chrome', 'edge'],
-  other: ['chrome', 'edge'],
-};
-
-// 안내가 필요 없으면 null.
-export function browserAdvice({ os, browser, inApp }) {
-  if (inApp === 'kakaotalk') return null; // 카카오톡 안에서는 정상 동작이 확인되어 안내하지 않는다
-  if (inApp) {
-    return os === 'ios'
-      ? '앱 안 브라우저에서는 영상이 재생되지 않을 수 있습니다. Safari로 열어 주세요.'
-      : '앱 안 브라우저에서는 영상이 재생되지 않을 수 있습니다. Chrome으로 열어 주세요.';
-  }
-  if ((ALLOWED[os] ?? ALLOWED.other).includes(browser)) return null;
-  if (os === 'ios') return 'iPhone·iPad에서는 Safari를 권장합니다.';
-  if (os === 'android') return 'Android에서는 Chrome을 권장합니다.';
-  if (os === 'macos') return 'Mac에서는 Safari, Chrome 또는 Edge를 권장합니다.';
-  return 'PC에서는 Chrome 또는 Edge를 권장합니다.';
 }

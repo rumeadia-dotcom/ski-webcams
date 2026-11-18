@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { detectEnv, browserAdvice } from '../js/browser.js';
+import { detectEnv } from '../js/browser.js';
 
 const UA = {
   iphoneSafari: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1',
@@ -17,7 +17,6 @@ const UA = {
   macSafari: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15',
   macFirefox: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:133.0) Gecko/20100101 Firefox/133.0',
 };
-const advice = (ua, touch = 0) => browserAdvice(detectEnv(ua, touch));
 
 test('환경 판별', () => {
   assert.deepEqual(detectEnv(UA.iphoneSafari), { os: 'ios', browser: 'safari', inApp: null });
@@ -37,28 +36,7 @@ test('아이패드는 맥 UA 여도 터치 지점으로 iOS 로 본다', () => {
   assert.equal(detectEnv(UA.macSafari, 0).os, 'macos');
 });
 
-test('추천 브라우저면 안내 없음', () => {
-  for (const key of ['iphoneSafari', 'androidChrome', 'androidSamsung', 'windowsEdge', 'windowsChrome', 'macSafari']) {
-    assert.equal(advice(UA[key]), null, key);
-  }
-  assert.equal(advice(UA.macSafari, 5), null);
-});
-
-test('추천 브라우저가 아니면 OS 에 맞는 안내', () => {
-  assert.equal(advice(UA.iphoneChrome), 'iPhone·iPad에서는 Safari를 권장합니다.');
-  assert.equal(advice(UA.androidFirefox), 'Android에서는 Chrome을 권장합니다.');
-  assert.equal(advice(UA.windowsFirefox), 'PC에서는 Chrome 또는 Edge를 권장합니다.');
-  assert.equal(advice(UA.macFirefox), 'Mac에서는 Safari, Chrome 또는 Edge를 권장합니다.');
-});
-
-test('인앱 브라우저 안내', () => {
-  assert.equal(advice(UA.iphoneKakao), null); // 카카오톡 안에서는 정상 동작이 확인되어 안내하지 않는다
-  assert.equal(advice(UA.androidChrome + ' KAKAOTALK 11.2.0'), null);
-  assert.equal(advice(UA.androidNaver), '앱 안 브라우저에서는 영상이 재생되지 않을 수 있습니다. Chrome으로 열어 주세요.');
-  assert.equal(advice(UA.androidInstagram), '앱 안 브라우저에서는 영상이 재생되지 않을 수 있습니다. Chrome으로 열어 주세요.');
-});
-
 test('빈 UA 에도 예외 없음', () => {
   assert.deepEqual(detectEnv(''), { os: 'other', browser: 'other', inApp: null });
-  assert.equal(typeof advice(undefined), 'string');
+  assert.deepEqual(detectEnv(undefined), { os: 'other', browser: 'other', inApp: null });
 });

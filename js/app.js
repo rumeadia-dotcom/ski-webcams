@@ -1,11 +1,10 @@
 import { RESORTS, officialUrlFor } from './data.js';
 import { loadFavorites, toggleFavorite, sortResorts } from './favorites.js';
 import { getWeather, lastWeatherError } from './weather.js';
-import { detectEnv, browserAdvice } from './browser.js';
+import { detectEnv } from './browser.js';
 import { createPlayer } from './player.js';
 import { parseRoute } from './route.js';
 
-const ADVICE_KEY = 'ski.adviceDismissed';
 const storage = safeStorage();
 const app = document.getElementById('app');
 
@@ -15,7 +14,6 @@ const state = {
 };
 let player = null;
 let autoStart = null; // 상세 화면이 붙은 뒤 첫 번째 웹캠을 재생하는 함수
-let adviceDismissed = false; // 저장이 막힌 환경에서도 이번 방문 동안은 닫힌 상태를 유지한다
 const env = detectEnv(navigator.userAgent, navigator.maxTouchPoints);
 
 function safeStorage() {
@@ -105,35 +103,6 @@ function officialLink(resort, label, cls) {
 
 // ---------- 공통 영역 ----------
 
-function adviceBanner() {
-  let dismissed = adviceDismissed;
-  try {
-    dismissed = dismissed || storage?.getItem(ADVICE_KEY) === '1';
-  } catch {
-    // 읽지 못하면 안내를 보여 준다.
-  }
-  const message = browserAdvice(env);
-  if (!message || dismissed) return null;
-  const banner = h('div', { class: 'advice', role: 'status' },
-    h('span', {}, message),
-    h('button', {
-      class: 'advice-close',
-      type: 'button',
-      'aria-label': '안내 닫기',
-      onclick: () => {
-        adviceDismissed = true;
-        try {
-          storage?.setItem(ADVICE_KEY, '1');
-        } catch {
-          // 저장 실패는 무시한다.
-        }
-        banner.remove();
-      },
-    }, '✕'),
-  );
-  return banner;
-}
-
 function favButton(resort, onChange) {
   const on = state.favorites.includes(resort.id);
   return h('button', {
@@ -189,7 +158,6 @@ function renderList() {
       h('h1', { class: 'brand' }, '스키장 웹캠',
         h('img', { class: 'app-icon', src: 'img/sticker-144.png', alt: '', width: '144', height: '144' })),
     ),
-    adviceBanner(),
     state.weather === null ? weatherFailure('notice') : null,
     h('ul', { class: 'list' }, ...rows),
     footer(),
@@ -329,7 +297,6 @@ function renderDetail(resort) {
       h('h1', {}, resort.name),
       fav,
     ),
-    adviceBanner(),
     h('main', { class: 'detail' }, ...stage, weatherSlot),
     footer(),
   );
