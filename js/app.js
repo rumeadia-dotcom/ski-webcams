@@ -5,6 +5,8 @@ import { detectEnv } from './browser.js';
 import { createPlayer } from './player.js';
 import { parseRoute } from './route.js';
 
+// 배포용 빌드는 식별값이 붙은 아이콘 경로를 넣어 준다. 개발 중에는 원본 경로를 쓴다.
+const ICON_URL = typeof __ICON_URL__ === 'string' ? __ICON_URL__ : 'img/sticker-144.png';
 const storage = safeStorage();
 const app = document.getElementById('app');
 
@@ -156,7 +158,7 @@ function renderList() {
   mount(
     h('header', { class: 'top' },
       h('h1', { class: 'brand' }, '스키장 웹캠',
-        h('img', { class: 'app-icon', src: 'img/sticker-144.png', alt: '', width: '144', height: '144' })),
+        h('img', { class: 'app-icon', src: ICON_URL, alt: '', width: '144', height: '144' })),
     ),
     state.weather === null ? weatherFailure('notice') : null,
     h('ul', { class: 'list' }, ...rows),

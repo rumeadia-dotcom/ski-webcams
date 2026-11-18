@@ -11,11 +11,12 @@
 
 ## 개발
 
-빌드 도구가 없는 정적 사이트입니다. 날씨만 `api/weather.js`(Vercel 서버 기능)를 거쳐 받으며, 로컬에서는 이 기능이 없어 날씨 서버에 직접 요청합니다.
+개발 중에는 빌드 없이 저장소 루트를 그대로 띄웁니다. 배포할 때는 `npm run build` 가 자바스크립트를 하나로 합치고 파일 이름에 내용 기반 식별값을 붙여 `dist/` 에 만듭니다(Vercel 이 자동 실행). 날씨만 `api/weather.js`(Vercel 서버 기능)를 거쳐 받으며, 로컬에서는 이 기능이 없어 날씨 서버에 직접 요청합니다.
 
 ```
 npm start   # http://localhost:5173
 npm test    # Node 내장 테스트 러너
+npm run preview   # 배포용 빌드를 만들어 http://localhost:5174 로 확인
 ```
 
 스키장과 카메라는 `js/data.js` 에서 관리합니다.

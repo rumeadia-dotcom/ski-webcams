@@ -3,7 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test",
-    "start": "python3 -m http.server 5173"
+    "start": "python3 -m http.server 5173",
+    "build": "node scripts/build.mjs",
+    "preview": "npm run build && python3 -m http.server 5174 --directory dist",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
   }
 }
