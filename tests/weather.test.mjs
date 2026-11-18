@@ -157,3 +157,26 @@ test('실패 원인을 기록한다', async () => {
   await getWeather({ ...base, storage: memoryStorage(), fetch: okFetch([location(1, 0), location(2, 0)]) });
   assert.equal(mod.lastWeatherError, null);
 });
+
+test('우리 사이트 경유를 먼저 쓰고, 실패하면 날씨 서버에 직접 요청한다', async () => {
+  const body = [location(1, 0), location(2, 0)];
+  const calls = [];
+  const proxyOk = async (url) => { calls.push(url); return { ok: true, json: async () => body }; };
+  const w1 = await getWeather({ fetch: proxyOk, storage: memoryStorage(), now: () => 1, resorts: two });
+  assert.equal(w1.a.temp, 1);
+  assert.deepEqual(calls, ['/api/weather']);
+
+  calls.length = 0;
+  const proxyDown = async (url) => {
+    calls.push(url);
+    if (url === '/api/weather') return { ok: false, status: 502, json: async () => ({}) };
+    return { ok: true, json: async () => body };
+  };
+  const w2 = await getWeather({ fetch: proxyDown, storage: memoryStorage(), now: () => 1, resorts: two });
+  assert.equal(w2.b.temp, 2);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0], '/api/weather');
+  assert.match(calls[1], /^https:\/\/api\.open-meteo\.com\//);
+  const mod = await import('../js/weather.js');
+  assert.equal(mod.lastWeatherError, null);
+});

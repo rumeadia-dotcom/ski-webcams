@@ -85,20 +85,15 @@ function readCache(storage, now) {
 // 마지막 실패 원인: null(성공) | 'timeout' | 'http-<상태코드>' | 'network' | 'empty'
 export let lastWeatherError = null;
 
-// 실패하면 예외 대신 null 을 돌려준다. 날씨가 없어도 사이트는 동작해야 한다.
-export async function getWeather({
-  fetch = globalThis.fetch,
-  storage = defaultStorage(),
-  now = Date.now,
-  resorts = RESORTS,
-  timeoutMs = TIMEOUT_MS,
-} = {}) {
-  const cached = readCache(storage, now());
-  if (cached) return cached;
+// 같은 사이트의 서버 기능. 카카오톡 같은 앱 안 브라우저는 다른 사이트(날씨 서버)로 보내는 요청이
+// 멈추는 경우가 있어, 우리 사이트를 먼저 거치고 실패하면 날씨 서버에 직접 요청한다.
+export const PROXY_URL = '/api/weather';
+
+// 주소 하나에서 날씨를 받아 온다. 실패하면 원인 코드를 message 로 가진 Error 를 던진다.
+async function fetchFrom(fetch, url, resorts, timeoutMs) {
   const controller = new AbortController();
   let timer;
   let timedOut = false;
-  let httpStatus = null;
   // 연결이나 본문 읽기가 멈춰도 제한 시간이 지나면 실패로 끝낸다.
   const timeout = new Promise((_resolve, reject) => {
     timer = setTimeout(() => {
@@ -109,31 +104,44 @@ export async function getWeather({
   });
   try {
     const load = async () => {
-      const res = await fetch(buildWeatherUrl(resorts), { signal: controller.signal });
-      if (!res.ok) httpStatus = res.status;
-      return res.ok ? res.json() : null;
+      const res = await fetch(url, { signal: controller.signal });
+      if (!res.ok) throw new Error(`http-${res.status}`);
+      return res.json();
     };
-    const json = await Promise.race([load(), timeout]);
-    if (!json) {
-      lastWeatherError = `http-${httpStatus}`;
-      return null;
-    }
-    const data = parseWeather(json, resorts);
-    if (Object.keys(data).length === 0) {
-      lastWeatherError = 'empty';
-      return null;
-    }
-    lastWeatherError = null;
-    try {
-      storage.setItem(KEY, JSON.stringify({ at: now(), data }));
-    } catch {
-      // 캐시 저장 실패는 무시한다.
-    }
+    const data = parseWeather(await Promise.race([load(), timeout]), resorts);
+    if (Object.keys(data).length === 0) throw new Error('empty');
     return data;
-  } catch {
-    lastWeatherError = timedOut ? 'timeout' : 'network';
-    return null;
+  } catch (error) {
+    const code = timedOut ? 'timeout' : /^(http-\d+|empty)$/.test(error?.message) ? error.message : 'network';
+    throw new Error(code);
   } finally {
     clearTimeout(timer);
   }
+}
+
+// 실패하면 예외 대신 null 을 돌려준다. 날씨가 없어도 사이트는 동작해야 한다.
+export async function getWeather({
+  fetch = globalThis.fetch,
+  storage = defaultStorage(),
+  now = Date.now,
+  resorts = RESORTS,
+  timeoutMs = TIMEOUT_MS,
+} = {}) {
+  const cached = readCache(storage, now());
+  if (cached) return cached;
+  for (const url of [PROXY_URL, buildWeatherUrl(resorts)]) {
+    try {
+      const data = await fetchFrom(fetch, url, resorts, timeoutMs);
+      lastWeatherError = null;
+      try {
+        storage.setItem(KEY, JSON.stringify({ at: now(), data }));
+      } catch {
+        // 캐시 저장 실패는 무시한다.
+      }
+      return data;
+    } catch (error) {
+      lastWeatherError = error.message; // 다음 주소로 넘어간다
+    }
+  }
+  return null;
 }
