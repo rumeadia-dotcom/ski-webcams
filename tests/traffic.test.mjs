@@ -4,9 +4,9 @@ import { originsFor, buildDirectionsUrl, parseDirections, formatDuration, loadTr
 import { RESORTS } from '../js/data.js';
 import handler from '../api/traffic.js';
 
-test('출발 도시: 전국 주요 도시 8곳', () => {
+test('출발 도시: 수도권·충청권 도시 7곳', () => {
   const names = originsFor().map((o) => o.name);
-  assert.deepEqual(names, ['서울', '인천', '수원', '대전', '대구', '광주', '부산', '울산']);
+  assert.deepEqual(names, ['서울', '의정부', '인천', '안산', '수원', '청주', '대전']);
 });
 
 test('길찾기 주소: 경도,위도 순서이고 요약만 요청한다', () => {
@@ -65,14 +65,14 @@ test('서버 기능: 출발 도시별 소요 시간을 돌려주고 5분 저장�
   const res = fakeRes();
   await handler({ query: { resort: 'konjiam' } }, res, { key: 'k', fetch: okFetch(calls), now: () => 1000 });
   assert.equal(res.code, 200);
-  assert.equal(calls.length, 8);
+  assert.equal(calls.length, 7);
   assert.equal(calls[0].init.headers.Authorization, 'KakaoAK k');
   assert.equal(res.body.at, 1000);
   assert.deepEqual(res.body.routes.slice(0, 2), [
     { from: '서울', minutes: 60, km: 50 },
-    { from: '인천', minutes: 60, km: 50 },
+    { from: '의정부', minutes: 60, km: 50 },
   ]);
-  assert.equal(res.body.routes.length, 8);
+  assert.equal(res.body.routes.length, 7);
   assert.match(res.headers['Cache-Control'], /s-maxage=300/);
   assert.doesNotMatch(JSON.stringify(res.body), /KakaoAK/);
 });
@@ -83,7 +83,7 @@ test('서버 기능: 일부만 실패하면 그 도시만 비우고, 전부 실�
   const res = fakeRes();
   await handler({ query: { resort: 'konjiam' } }, res, { key: 'k', fetch: flaky, now: () => 1 });
   assert.equal(res.code, 200);
-  assert.deepEqual(res.body.routes[1], { from: '인천', minutes: null, km: null });
+  assert.deepEqual(res.body.routes[1], { from: '의정부', minutes: null, km: null });
 
   const bad = fakeRes();
   await handler({ query: { resort: 'konjiam' } }, bad, { key: 'k', fetch: async () => { throw new Error('x'); } });

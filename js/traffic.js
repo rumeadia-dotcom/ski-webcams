@@ -4,17 +4,16 @@
 // 출발 지점은 각 도시 시청이다.
 const CITIES = {
   seoul: { name: '서울', lat: 37.5665, lon: 126.978 },
+  uijeongbu: { name: '의정부', lat: 37.7381, lon: 127.0337 },
   incheon: { name: '인천', lat: 37.4563, lon: 126.7052 },
+  ansan: { name: '안산', lat: 37.3219, lon: 126.8309 },
   suwon: { name: '수원', lat: 37.2636, lon: 127.0286 },
+  cheongju: { name: '청주', lat: 36.6424, lon: 127.489 },
   daejeon: { name: '대전', lat: 36.3504, lon: 127.3845 },
-  daegu: { name: '대구', lat: 35.8714, lon: 128.6014 },
-  gwangju: { name: '광주', lat: 35.1595, lon: 126.8526 },
-  busan: { name: '부산', lat: 35.1796, lon: 129.0756 },
-  ulsan: { name: '울산', lat: 35.5384, lon: 129.3114 },
 };
 
-// 전국 주요 도시 8곳. 모든 스키장에 같은 순서로 보여 준다.
-const ORIGINS = ['seoul', 'incheon', 'suwon', 'daejeon', 'daegu', 'gwangju', 'busan', 'ulsan'];
+// 수도권과 충청권 도시 7곳. 북쪽에서 남쪽 순서로, 모든 스키장에 같은 순서로 보여 준다.
+const ORIGINS = ['seoul', 'uijeongbu', 'incheon', 'ansan', 'suwon', 'cheongju', 'daejeon'];
 
 export function originsFor() {
   return ORIGINS.map((key) => CITIES[key]);
