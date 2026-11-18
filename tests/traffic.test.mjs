@@ -106,3 +106,14 @@ test('화면 쪽 불러오기: 실패하면 null', async () => {
   assert.equal(await loadTraffic('konjiam', { fetch: async () => { throw new Error('x'); } }), null);
   assert.equal(await loadTraffic('konjiam', { fetch: async () => ({ ok: true, json: async () => ({ routes: [] }) }) }), null);
 });
+
+test('서버 기능: 도로에서 먼 스키장은 차로 도착하는 지점으로 길을 찾는다', async () => {
+  const calls = [];
+  await handler({ query: { resort: 'yongpyong' } }, fakeRes(), { key: 'k', fetch: okFetch(calls) });
+  const resort = RESORTS.find((r) => r.id === 'yongpyong');
+  assert.ok(resort.drive);
+  assert.equal(new URL(calls[0].url).searchParams.get('destination'), `${resort.drive.lon},${resort.drive.lat}`);
+  calls.length = 0;
+  await handler({ query: { resort: 'konjiam' } }, fakeRes(), { key: 'k', fetch: okFetch(calls) });
+  assert.equal(new URL(calls[0].url).searchParams.get('destination'), '127.2875,37.3346');
+});

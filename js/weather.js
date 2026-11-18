@@ -35,6 +35,7 @@ function parseLocation(loc) {
     temp: current.temperature_2m,
     precip: current.precipitation,
     kind: weatherKind(current.weather_code),
+    time: typeof current.time === 'string' ? current.time.slice(11, 16) : null, // 관측 기준 시각 'HH:MM'
     days: daily.time.map((date, i) => ({
       date,
       kind: weatherKind(daily.weather_code?.[i]),

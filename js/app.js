@@ -236,6 +236,7 @@ function weatherSection(resort) {
         h('strong', {}, KIND_LABEL[w.kind]),
         h('span', {}, `지금 강수량 ${amount(w.precip)}mm`),
       ),
+      w.time ? h('span', { class: 'stamp' }, `${w.time} 기준`) : null,
     ),
     h('ol', { class: 'days', tabindex: '0', 'aria-label': '일별 날씨, 좌우로 스크롤' }, ...w.days.map((day) =>
       h('li', { class: `day${day.isToday ? ' is-today' : ''}` },
@@ -269,7 +270,9 @@ function trafficSection(resort) {
       return;
     }
     section.replaceChildren(
-      h('h2', { class: 'traffic-title' }, '지금 차로 가면'),
+      h('div', { class: 'traffic-head' },
+        h('h2', { class: 'traffic-title' }, '지금 차로 가면'),
+        h('span', { class: 'stamp' }, `${clock(data.at)} 기준`)),
       h('ul', { class: 'routes' }, ...data.routes.map((route) =>
         h('li', { class: 'route' },
           h('span', { class: 'route-name' }, `${route.from} → ${resort.name}`),
@@ -279,7 +282,7 @@ function trafficSection(resort) {
                 h('strong', {}, formatDuration(route.minutes)),
                 h('span', { class: 'muted' }, ` · ${route.km}km`)),
         ))),
-      h('p', { class: 'muted small' }, `${clock(data.at)} 기준, 각 도시 시청에서 출발하는 추천 경로입니다. 실시간 교통이 반영된 예상 시간이며 실제와 다를 수 있습니다. 제공: 카카오모빌리티`),
+      h('p', { class: 'muted small' }, `각 도시 시청에서 출발하는 추천 경로입니다. 실시간 교통이 반영된 예상 시간이며 실제와 다를 수 있습니다. 제공: 카카오모빌리티`),
     );
   }
 

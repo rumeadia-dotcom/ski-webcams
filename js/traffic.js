@@ -25,6 +25,9 @@ export function originsFor(resort) {
   return (ORIGINS_BY_RESORT[resort.id] ?? DEFAULT_ORIGINS).map((key) => CITIES[key]);
 }
 
+// 날씨용 좌표(lat, lon)는 슬로프 위라 도로에서 멀 수 있다. 그런 스키장은 차로 도착하는 지점(drive)을 따로 둔다.
+export const driveTarget = (resort) => resort.drive ?? resort;
+
 export function buildDirectionsUrl(origin, destination) {
   const params = new URLSearchParams({
     origin: `${origin.lon},${origin.lat}`,

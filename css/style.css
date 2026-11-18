@@ -290,6 +290,8 @@ button { font: inherit; color: inherit; }
   border-radius: 16px;
   background: var(--surface);
 }
+.stamp { margin-left: auto; align-self: flex-start; color: var(--muted); font-size: 11px; white-space: nowrap; }
+.traffic-head { display: flex; align-items: baseline; gap: 8px; }
 .traffic-title { margin: 0; font-size: 15px; font-weight: 600; }
 .btn-line {
   min-height: var(--tap);

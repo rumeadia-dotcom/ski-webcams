@@ -17,6 +17,7 @@ export const RESORTS = [
     name: '모나용평',
     lat: 37.6282,
     lon: 128.6777,
+    drive: { lat: 37.64433, lon: 128.67927 }, // 차로 도착하는 지점: 드래곤프라자
     mode: 'direct',
     officialUrl: 'https://www.yongpyong.co.kr/kor/guide/realTimeNews/ypResortWebcam.do',
     cams: [
@@ -32,6 +33,7 @@ export const RESORTS = [
     name: '휘닉스파크',
     lat: 37.5786,
     lon: 128.3164,
+    drive: { lat: 37.58088, lon: 128.32766 }, // 차로 도착하는 지점: 리조트 입구(태기로)
     mode: 'direct',
     officialUrl: 'https://phoenixhnr.co.kr/page/pyeongchang/guide/operation/sketchMovie',
     cams: [
@@ -91,6 +93,7 @@ export const RESORTS = [
     name: '오크밸리',
     lat: 37.4022,
     lon: 127.8191,
+    drive: { lat: 37.41037, lon: 127.81951 }, // 차로 도착하는 지점: 오크밸리2길
     mode: 'direct',
     officialUrl: 'https://oakvalley.co.kr/ski/introduction/realtime',
     cams: [
@@ -117,6 +120,7 @@ export const RESORTS = [
     name: '하이원',
     lat: 37.1939,
     lon: 128.8294,
+    drive: { lat: 37.2117, lon: 128.82125 }, // 차로 도착하는 지점: 하이원길
     mode: 'official',
     camCount: 18,
     officialUrl: 'https://www.high1.com/ski/slopeView.do?key=748&mode=p',
@@ -138,6 +142,7 @@ export const RESORTS = [
     name: '오투리조트',
     lat: 37.1735,
     lon: 128.9383,
+    drive: { lat: 37.170188, lon: 128.945948 }, // 차로 도착하는 지점: 슬로프 아래 도로
     mode: 'official',
     camCount: 8,
     officialUrl: 'https://www.o2resort.com/SKI/liftInfo.jsp#liftwebcam',
@@ -158,6 +163,7 @@ export const RESORTS = [
     name: '비발디파크',
     lat: 37.6418,
     lon: 127.6875,
+    drive: { lat: 37.64612, lon: 127.68103 }, // 차로 도착하는 지점: 소노벨 비발디파크
     mode: 'official',
     camCount: 7,
     officialUrl: 'https://www.sonohotelsresorts.com/skiboard/status',

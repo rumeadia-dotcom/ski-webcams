@@ -2,7 +2,7 @@
 // 카카오모빌리티 길찾기 API 키는 Vercel 환경변수(KAKAO_REST_API_KEY)에만 있고 브라우저로 나가지 않는다.
 // 응답을 CDN 이 10분 저장하므로, 방문자가 아무리 많아도 호출은 스키장마다 10분에 한 번이다.
 import { RESORTS } from '../js/data.js';
-import { originsFor, buildDirectionsUrl, parseDirections } from '../js/traffic.js';
+import { originsFor, buildDirectionsUrl, parseDirections, driveTarget } from '../js/traffic.js';
 
 const UPSTREAM_TIMEOUT_MS = 8000;
 
@@ -21,7 +21,7 @@ export default async function handler(req, res, {
 
   const routes = await Promise.all(originsFor(resort).map(async (origin) => {
     try {
-      const upstream = await fetch(buildDirectionsUrl(origin, resort), {
+      const upstream = await fetch(buildDirectionsUrl(origin, driveTarget(resort)), {
         headers: { Authorization: `KakaoAK ${key}` },
         signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
       });

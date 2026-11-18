@@ -199,3 +199,10 @@ test('목록 한 줄 요약: 지금 눈·비가 먼저, 다음은 오늘·내일
   assert.deepEqual(weatherNote({ kind: 'clear', days: [{ snow: 3, isToday: true }] }), { kind: 'snow', text: '오늘 눈 3cm' }); // 내일이 없어도 된다
   assert.equal(weatherNote(undefined), null);
 });
+
+test('날씨 기준 시각을 함께 돌려준다', () => {
+  const loc = location(1, 0);
+  loc.current.time = '2026-11-18T14:15';
+  assert.equal(parseWeather([loc], [two[0]]).a.time, '14:15');
+  assert.equal(parseWeather([location(1, 0)], [two[0]]).a.time, null);
+});
