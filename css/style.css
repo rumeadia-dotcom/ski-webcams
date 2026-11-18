@@ -14,6 +14,10 @@
   --stage: #0b1118;
   --stage-text: #e8eef3;
   --tap: 48px;
+  /* 간격 단계: 2 / 4 / 8 / 12 / 16 / 24. 묶음 안은 8~12, 카드 안쪽 16, 묶음 사이 24. */
+  --gap-group: 24px;
+  --gap-inside: 12px;
+  --pad-card: 16px;
   /* 글자 크기 단계. 역할마다 하나씩이고, 이웃한 단계는 2px 이상 차이 난다. */
   --fs-meta: 12px;    /* 기준 시각, 단위, 각주 */
   --fs-label: 14px;   /* 설명, 일별 칸, 보조 버튼 */
@@ -147,7 +151,7 @@ a { text-underline-offset: 3px; }
   z-index: 20;
   max-width: calc(100% - 32px);
   transform: translateX(-50%);
-  padding: 10px 16px;
+  padding: 12px 16px;
   border-radius: 12px;
   background: var(--text);
   color: var(--bg);
@@ -158,7 +162,7 @@ a { text-underline-offset: 3px; }
 
 .notice {
   margin: 0 0 12px;
-  padding: 10px 14px;
+  padding: 12px 16px;
   border-radius: 12px;
   background: var(--surface);
   color: var(--muted);
@@ -166,7 +170,7 @@ a { text-underline-offset: 3px; }
 }
 
 /* 목록 화면 제목 아래의 산 능선 */
-.ridge { height: 44px; margin: -6px -16px 10px; }
+.ridge { height: 44px; margin: -4px -16px 12px; }
 .ridge svg { display: block; width: 100%; height: 100%; }
 .ridge-far { fill: var(--line); }
 .ridge-near { fill: var(--surface); }
@@ -238,13 +242,14 @@ a { text-underline-offset: 3px; }
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 16px 10px 0;
+  min-height: 72px; /* 눈 요약이 있든 없든 행 높이를 같게 한다 */
+  padding: 8px 16px 8px 0;
   color: inherit;
   text-decoration: none;
 }
 .row-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .row-name { font-size: var(--fs-item); font-weight: 600; line-height: 1.35; letter-spacing: -0.01em; }
-.row-sub { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: var(--fs-label); }
+.row-sub { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: var(--fs-label); }
 .row-sub.is-live::before {
   content: "";
   flex: none;
@@ -253,13 +258,15 @@ a { text-underline-offset: 3px; }
   border-bottom: 5px solid transparent;
 }
 .row-weather { flex: none; display: flex; flex-direction: column; align-items: flex-end; }
-.row-now { display: flex; align-items: center; gap: 6px; }
+.row-now { display: flex; align-items: center; gap: 8px; }
 .row-note { font-size: var(--fs-meta); font-weight: 600; white-space: nowrap; }
 .row-weather.is-loading { color: var(--muted); }
 .row-temp { font-size: var(--fs-item); font-weight: 600; font-variant-numeric: tabular-nums; }
 
 /* 상세 */
-.detail { display: flex; flex-direction: column; gap: 12px; }
+.detail { display: flex; flex-direction: column; gap: var(--gap-group); }
+/* 보기 묶음: 영상, 전광판 한 줄, 카메라 */
+.watch { display: flex; flex-direction: column; gap: var(--gap-inside); }
 
 .stage {
   position: relative;
@@ -316,7 +323,7 @@ a { text-underline-offset: 3px; }
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0 18px;
+  gap: 0 16px;
   min-height: 44px;
   padding: 0 16px;
   background: var(--stage);
@@ -346,6 +353,7 @@ a { text-underline-offset: 3px; }
 
 /* 카메라는 2열로 모두 보여 준다. 숨는 카메라가 없어야 한다. */
 .cams { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.cam-group { display: contents; }
 .cam {
   display: flex;
   align-items: center;
@@ -371,15 +379,11 @@ a { text-underline-offset: 3px; }
 }
 .cam.is-on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); font-weight: 600; }
 .cam.is-on::before { border-left-color: var(--accent); }
+/* 카메라 격자의 마지막 칸: 공식 페이지 링크. 버튼보다 조용하게, 테두리 없이 둔다. */
+.cam-link { justify-content: center; border-color: transparent; background: none; color: var(--accent); text-decoration: none; }
+.cam-link::before { content: none; }
+.cam-link.is-wide { grid-column: 1 / -1; }
 
-.text-link {
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-height: 44px;
-  font-size: var(--fs-label);
-}
 
 /* 우리 사이트에서 재생하지 않는 스키장: 낮은 안내 카드 */
 .linkout {
@@ -388,7 +392,7 @@ a { text-underline-offset: 3px; }
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px 16px;
+  padding: var(--pad-card);
   border: 1px solid var(--line);
   border-radius: 16px;
   background: var(--surface);
@@ -401,7 +405,7 @@ a { text-underline-offset: 3px; }
 .traffic.is-loading { min-height: 420px; }
 .traffic.is-loading.is-compact { min-height: 150px; }
 .traffic:has(.routes), .traffic.is-loading {
-  padding: 14px 16px;
+  padding: var(--pad-card);
   border: 1px solid var(--line);
   border-radius: 16px;
   background: var(--surface);
@@ -467,7 +471,7 @@ a { text-underline-offset: 3px; }
 
 /* 날씨 */
 .weather {
-  padding: 16px;
+  padding: var(--pad-card);
   border: 1px solid var(--line);
   border-radius: 16px;
   background: var(--surface);
@@ -537,7 +541,7 @@ a { text-underline-offset: 3px; }
 /* 전광판 조각을 눌러 내려왔을 때 고정된 제목 줄에 가리지 않게 한다. */
 .weather, .traffic { scroll-margin-top: 68px; }
 
-.footer { margin-top: 24px; color: var(--muted); font-size: var(--fs-meta); text-wrap: pretty; }
+.footer { margin-top: var(--gap-group); color: var(--muted); font-size: var(--fs-meta); text-wrap: pretty; }
 .footer p { margin: 0 0 4px; }
 
 @media (min-width: 600px) {
@@ -545,6 +549,7 @@ a { text-underline-offset: 3px; }
   .stage:has(+ .board:not([hidden])) { border-radius: 16px 16px 0 0; }
   .board.is-attached { margin: -12px 0 0; border-radius: 0 0 16px 16px; }
   .cams { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cam-link.is-wide { grid-column: auto; }
 }
 
 @media (orientation: landscape) and (max-height: 500px) {

@@ -450,11 +450,13 @@ function directStage(resort, firstCam = 0) {
 
   return [
     h('div', { class: 'stage' }, media, overlay),
-    h('div', { class: 'cams', role: 'group', 'aria-label': '카메라' }, ...buttons),
+    // 카메라와 공식 페이지 링크가 한 격자를 나눠 쓴다. 카메라가 홀수면 링크가 빈칸을 채우고, 짝수면 한 줄을 차지한다.
+    h('div', { class: 'cams' },
+      h('div', { class: 'cam-group', role: 'group', 'aria-label': '카메라' }, ...buttons),
+      officialLink(resort, '공식 페이지에서 보기', `cam cam-link${resort.cams.length % 2 === 0 ? ' is-wide' : ''}`)),
     resort.limitSec
       ? h('p', { class: 'muted small' }, `이 스키장은 공식 페이지와 같이 ${resort.limitSec}초 재생 후 정지합니다.`)
       : null,
-    officialLink(resort, '공식 페이지에서 보기', 'text-link'),
   ];
 }
 
@@ -495,7 +497,10 @@ function renderDetail(resort, firstCam) {
       h('h1', { tabindex: '-1' }, resort.name),
       h('span', { class: 'top-actions' }, shareButton(resort), fav),
     ),
-    h('main', { class: 'detail' }, ...(board.el ? [stage[0], board.el, ...stage.slice(1)] : stage), weatherSlot, trafficSection(resort)),
+    // 세 묶음: 보기(영상·요약·카메라), 날씨, 교통. 묶음 안은 촘촘하게, 묶음 사이는 넉넉하게 둔다.
+    h('main', { class: 'detail' },
+      board.el ? h('div', { class: 'watch' }, stage[0], board.el, ...stage.slice(1)) : stage,
+      weatherSlot, trafficSection(resort)),
     footer(),
   );
   drawBoard();
