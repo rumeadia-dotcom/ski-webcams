@@ -400,16 +400,19 @@ a { text-underline-offset: 3px; }
 .linkout p { flex: 1 1 12em; margin: 0; text-wrap: balance; }
 
 /* 교통상황 */
-.traffic { display: flex; flex-direction: column; gap: 8px; }
-.traffic p { margin: 0; }
-.traffic.is-loading { min-height: 420px; }
-.traffic.is-loading.is-compact { min-height: 150px; }
-.traffic:has(.routes), .traffic.is-loading {
+/* 불러오는 중이든 실패했든 항상 같은 카드 모양이다. */
+.traffic {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   padding: var(--pad-card);
   border: 1px solid var(--line);
   border-radius: 16px;
   background: var(--surface);
 }
+.traffic p { margin: 0; }
+.traffic.is-loading { min-height: 420px; }
+.traffic.is-loading.is-compact { min-height: 150px; }
 .stamp { margin-left: auto; align-self: flex-start; color: var(--muted); font-size: var(--fs-meta); white-space: nowrap; }
 .traffic-head { display: flex; align-items: baseline; gap: 8px; }
 .traffic-title { margin: 0; font-size: var(--fs-body); font-weight: 600; }

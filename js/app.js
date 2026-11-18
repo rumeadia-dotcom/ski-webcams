@@ -296,7 +296,7 @@ const LEVEL_LABEL = { smooth: '원활', slow: '서행', jam: '정체' };
 
 // 전광판 한 줄: 영상 바로 아래에서 지금 날씨와 내 출발지 소요 시간을 한눈에 보여 준다.
 // 조각을 누르면 해당 구역으로 내려간다. 교통은 출발지를 고른 사람에게만 나온다.
-const board = { el: null, resort: null, mine: null };
+const board = { el: null, resort: null, mine: null, ready: false }; // ready: 교통상황을 불러왔는지
 function drawBoard() {
   if (!board.el?.isConnected) return; // 영상이 없는 스키장에는 전광판 한 줄이 없다
   const jump = (selector) => () => document.querySelector(selector)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -304,7 +304,7 @@ function drawBoard() {
   const parts = [];
   if (weather) {
     parts.push(h('button', { class: 'board-part', type: 'button', onclick: jump('.weather') },
-      h('span', { class: 'sr-only' }, '날씨 '), weather.join(' · ')));
+      h('span', { class: 'sr-only' }, '날씨 '), weather.join(' · '), h('span', { class: 'sr-only' }, ', 날씨로 이동')));
   } else if (state.weather === undefined) {
     parts.push(h('span', { class: 'board-part is-wait' }, '날씨 확인 중'));
   }
@@ -313,10 +313,11 @@ function drawBoard() {
       `${board.mine.from}에서 ${formatDuration(board.mine.minutes)}`,
       LEVEL_LABEL[board.mine.level]
         ? h('span', { class: `level level-${board.mine.level}` }, h('span', { class: 'sr-only' }, ', '), LEVEL_LABEL[board.mine.level])
-        : null));
+        : null,
+      h('span', { class: 'sr-only' }, ', 교통상황으로 이동')));
   }
   // 출발지를 아직 고르지 않은 사람에게는 소요 시간 기능이 있다는 것을 여기서 알린다.
-  if (!board.mine && !loadOrigin(storage)) {
+  if (board.ready && !board.mine && !loadOrigin(storage)) {
     parts.push(h('button', { class: 'board-part is-hint', type: 'button', onclick: jump('.traffic') }, '출발지 고르기'));
   }
   board.el.hidden = parts.length === 0;
@@ -341,6 +342,7 @@ function trafficSection(resort) {
   function draw(data) {
     const { mine, others } = arrangeRoutes(data.routes, origin);
     board.mine = mine;
+    board.ready = true;
     drawBoard();
     const pick = (route) => () => {
       origin = route.from;
@@ -378,7 +380,10 @@ function trafficSection(resort) {
     if (!section.isConnected) return; // 그 사이 다른 화면으로 이동했다
     section.className = 'traffic';
     if (!data) {
-      section.replaceChildren(h('p', { class: 'muted' }, '교통상황을 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요.'), retry());
+      section.replaceChildren(
+        h('h2', { class: 'traffic-title' }, '지금 차로 가면'),
+        h('p', { class: 'muted' }, '교통상황을 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요.'),
+        retry());
       return;
     }
     draw(data);
@@ -488,6 +493,7 @@ function renderDetail(resort, firstCam) {
   const weatherSlot = h('div', { id: 'weather-slot' }, weatherSection(resort));
   board.resort = resort;
   board.mine = null;
+  board.ready = false;
   // 전광판 한 줄은 영상에 붙어 있을 때만 둔다. 영상이 없으면 바로 아래 날씨 카드와 내용이 겹친다.
   board.el = resort.mode === 'direct' ? h('div', { class: 'board is-attached', role: 'group', 'aria-label': '지금 상황 요약' }) : null;
 
