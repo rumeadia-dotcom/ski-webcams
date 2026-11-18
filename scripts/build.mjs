@@ -8,6 +8,10 @@ import { createHash } from 'node:crypto';
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { RESORTS } from '../js/data.js';
+import { sharePageHtml } from '../js/share.js';
+
+const SITE_URL = 'https://ski-webcams.vercel.app';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
@@ -80,5 +84,14 @@ await writeFile(path.join(dist, 'index.html'), html);
 
 // 이전 배포의 첫 화면을 캐시한 방문자가 요청할 수 있는 예전 아이콘 경로를 한동안 유지한다.
 await cp(path.join(root, 'img'), path.join(dist, 'img'), { recursive: true });
+
+// 홈 화면에 추가할 때 쓰는 앱 정보
+await cp(path.join(root, 'manifest.webmanifest'), path.join(dist, 'manifest.webmanifest'));
+
+// 스키장별 공유 미리보기 페이지(/r/{id}). 메신저가 제목과 그림을 읽을 수 있게 한다.
+await mkdir(path.join(dist, 'r'), { recursive: true });
+for (const resort of RESORTS) {
+  await writeFile(path.join(dist, 'r', `${resort.id}.html`), sharePageHtml(resort, { siteUrl: SITE_URL, image: 'img/og.png' }));
+}
 
 console.log('빌드 완료:', [outputFor(js.metafile, 'js/app.js'), outputFor(css.metafile, 'css/style.css'), icon, touchIcon].join(', '));

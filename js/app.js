@@ -1,13 +1,15 @@
 import { RESORTS, officialUrlFor } from './data.js';
 import { loadFavorites, toggleFavorite, sortResorts } from './favorites.js';
-import { getWeather, lastWeatherError } from './weather.js';
+import { getWeather, lastWeatherError, weatherNote } from './weather.js';
 import { detectEnv } from './browser.js';
 import { createPlayer } from './player.js';
 import { parseRoute } from './route.js';
 import { createAnalytics } from './analytics.js';
+import { share, shareUrl } from './share.js';
 
 // 배포용 빌드는 식별값이 붙은 아이콘 경로를 넣어 준다. 개발 중에는 원본 경로를 쓴다.
-const ICON_URL = typeof __ICON_URL__ === 'string' ? __ICON_URL__ : 'img/sticker-144.png';
+const BUILT = typeof __ICON_URL__ === 'string';
+const ICON_URL = BUILT ? __ICON_URL__ : 'img/sticker-144.png';
 const storage = safeStorage();
 const analytics = createAnalytics();
 const app = document.getElementById('app');
@@ -17,7 +19,8 @@ const state = {
   weather: undefined, // undefined 불러오는 중 / null 실패 / 객체 성공
 };
 let player = null;
-let autoStart = null; // 상세 화면이 붙은 뒤 첫 번째 웹캠을 재생하는 함수
+let autoStart = null; // 상세 화면이 붙은 뒤 웹캠을 재생하는 함수
+let currentCam = -1; // 지금 고른 카메라 순서(공유 주소에 쓴다). 없으면 -1
 const env = detectEnv(navigator.userAgent, navigator.maxTouchPoints);
 
 function safeStorage() {
@@ -81,6 +84,7 @@ const ICONS = {
   thunder: svg(`${CLOUD}<path d="M12.5 17l-2 3h3l-2 3"/>`),
   star: '<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.3 1.1 6.1L12 17.1 6.6 20l1.1-6.1L3.2 9.6l6.1-.8z"/></svg>',
   back: svg('<path d="M15 5l-7 7 7 7"/>'),
+  share: svg('<path d="M12 15V3.5M8 7l4-4 4 4M6 11H5a1 1 0 0 0-1 1v7.5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V12a1 1 0 0 0-1-1h-1"/>'),
   external: svg('<path d="M14 5h5v5M19 5l-8 8M11 6H6a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-5"/>'),
 };
 const KIND_LABEL = { clear: '맑음', cloudy: '흐림', fog: '안개', rain: '비', snow: '눈', thunder: '뇌우' };
@@ -131,6 +135,35 @@ function favButton(resort, onChange) {
   });
 }
 
+// 공유 버튼. 휴대폰은 공유 창을 띄우고, 공유 창이 없는 브라우저는 주소를 복사한다.
+function shareButton(resort) {
+  return h('button', {
+    class: 'icon-btn',
+    type: 'button',
+    'aria-label': resort ? `${resort.name} 공유` : '사이트 공유',
+    html: ICONS.share,
+    onclick: async () => {
+      const url = shareUrl({ origin: location.origin, pages: BUILT, resortId: resort?.id, cam: currentCam });
+      const cam = resort?.cams?.[currentCam];
+      const title = resort ? `${resort.name}${cam ? ` ${cam.name}` : ''} 실시간 웹캠` : '스키장 웹캠';
+      const result = await share({ title, url });
+      if (result === 'cancelled') return;
+      analytics.track('share', { resort_id: resort?.id ?? 'site', method: result });
+      if (result === 'copied') toast('주소를 복사했습니다');
+      if (result === 'failed') toast(`복사하지 못했습니다. ${url}`);
+    },
+  });
+}
+
+let toastTimer;
+function toast(message) {
+  document.querySelector('.toast')?.remove();
+  clearTimeout(toastTimer);
+  const el = h('div', { class: 'toast', role: 'status' }, message);
+  document.body.append(el);
+  toastTimer = setTimeout(() => el.remove(), 3000);
+}
+
 function footer() {
   return h('footer', { class: 'footer' },
     h('p', {}, '영상은 각 스키장이 공개한 웹캠입니다. 개장 전이나 야간에는 송출되지 않을 수 있습니다.'),
@@ -145,9 +178,13 @@ function listWeather(resort) {
   if (state.weather === undefined) return h('span', { class: 'row-weather is-loading', 'aria-hidden': 'true' }, '…');
   const w = state.weather?.[resort.id];
   if (!w) return null;
-  return h('span', { class: 'row-weather', 'aria-label': `${KIND_LABEL[w.kind]}, ${temp(w.temp)}` },
-    h('span', { class: 'row-temp' }, temp(w.temp)),
-    icon(w.kind, `kind-${w.kind}`),
+  const note = weatherNote(w);
+  return h('span', { class: 'row-weather', 'aria-label': `${KIND_LABEL[w.kind]}, ${temp(w.temp)}${note ? `, ${note.text}` : ''}` },
+    h('span', { class: 'row-now' },
+      h('span', { class: 'row-temp' }, temp(w.temp)),
+      icon(w.kind, `kind-${w.kind}`),
+    ),
+    note ? h('span', { class: `row-note kind-${note.kind}` }, note.text) : null,
   );
 }
 
@@ -169,6 +206,7 @@ function renderList() {
     h('header', { class: 'top' },
       h('h1', { class: 'brand' }, '스키장 웹캠',
         h('img', { class: 'app-icon', src: ICON_URL, alt: '', width: '144', height: '144' })),
+      h('span', { class: 'top-actions' }, shareButton(null)),
     ),
     state.weather === null ? weatherFailure('notice') : null,
     h('ul', { class: 'list' }, ...rows),
@@ -214,7 +252,7 @@ function weatherSection(resort) {
   return section;
 }
 
-function directStage(resort) {
+function directStage(resort, firstCam = 0) {
   const media = h('div', { class: 'media' });
   const overlay = h('div', { class: 'overlay', role: 'status' });
   const buttons = resort.cams.map((cam) =>
@@ -265,13 +303,14 @@ function directStage(resort) {
 
   function start(cam, auto = false) {
     current = cam;
+    currentCam = resort.cams.indexOf(cam);
     startedAuto = auto;
     player.play(cam, { limitSec: resort.limitSec });
   }
 
   player = createPlayer(media, { onState, preferNative: env.os === 'ios' });
   onState('idle');
-  autoStart = () => start(resort.cams[0], true);
+  autoStart = () => start(resort.cams[firstCam] ?? resort.cams[0], true);
 
   return [
     h('div', { class: 'stage' }, media, overlay),
@@ -305,10 +344,10 @@ function noneStage(resort) {
   ];
 }
 
-function renderDetail(resort) {
+function renderDetail(resort, firstCam) {
   document.title = `${resort.name} · 스키장 웹캠`;
   analytics.track('view_resort', { resort_id: resort.id, resort_mode: resort.mode });
-  const stage = { direct: directStage, official: officialStage, none: noneStage }[resort.mode](resort);
+  const stage = { direct: directStage, official: officialStage, none: noneStage }[resort.mode](resort, firstCam);
   const fav = h('span', { class: 'top-fav' });
   const drawFav = () => fav.replaceChildren(favButton(resort, drawFav));
   drawFav();
@@ -318,7 +357,7 @@ function renderDetail(resort) {
     h('header', { class: 'top' },
       h('a', { class: 'back', href: '#/', 'aria-label': '목록으로', html: ICONS.back }),
       h('h1', {}, resort.name),
-      fav,
+      h('span', { class: 'top-actions' }, shareButton(resort), fav),
     ),
     h('main', { class: 'detail' }, ...stage, weatherSlot),
     footer(),
@@ -341,8 +380,9 @@ function render() {
   player?.destroy(); // 화면을 떠나면 재생을 멈추고 정리한다
   player = null;
   autoStart = null;
+  currentCam = -1;
   route = parseRoute(location.hash, RESORTS);
-  if (route.view === 'detail') renderDetail(route.resort);
+  if (route.view === 'detail') renderDetail(route.resort, route.cam);
   else renderList();
   window.scrollTo(0, 0);
 }

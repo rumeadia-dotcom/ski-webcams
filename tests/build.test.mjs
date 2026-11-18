@@ -43,6 +43,25 @@ test('배포용 빌드', async (t) => {
     assert.doesNotMatch(html, /stats/); // 사이트 첫 화면에서 통계 페이지로 가는 링크는 없다
   });
 
+  await t.test('홈 화면 추가용 앱 정보와 아이콘이 함께 나간다', () => {
+    assert.match(html, /rel="manifest" href="manifest\.webmanifest"/);
+    const manifest = JSON.parse(readFileSync(path.join(dist, 'manifest.webmanifest'), 'utf8'));
+    assert.equal(manifest.display, 'standalone');
+    assert.ok(manifest.icons.some((i) => i.sizes === '192x192'));
+    assert.ok(manifest.icons.some((i) => i.sizes === '512x512' && i.purpose === 'maskable'));
+    for (const i of manifest.icons) assert.ok(existsSync(path.join(dist, i.src)), i.src);
+  });
+
+  await t.test('스키장마다 공유 미리보기 페이지가 있고 미리보기 그림이 실제로 있다', () => {
+    const pages = readdirSync(path.join(dist, 'r'));
+    assert.equal(pages.length, 13);
+    const page = readFileSync(path.join(dist, 'r', 'yongpyong.html'), 'utf8');
+    assert.match(page, /og:title" content="[^"]*용평[^"]*"/);
+    assert.match(page, /#\/resort\/yongpyong/);
+    const image = /og:image" content="https:\/\/ski-webcams\.vercel\.app\/([^"]+)"/.exec(html)[1];
+    assert.ok(existsSync(path.join(dist, image)), image);
+  });
+
   await t.test('같은 내용이면 같은 파일 이름이 나온다', () => {
     const before = readdirSync(path.join(dist, 'assets')).sort();
     execFileSync(process.execPath, ['scripts/build.mjs'], { cwd: root, stdio: 'pipe' });

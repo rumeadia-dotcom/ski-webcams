@@ -32,3 +32,15 @@ test('주소 해석', () => {
   assert.deepEqual(parseRoute('#/resort/%', resorts), { view: 'list' });
   assert.deepEqual(parseRoute('#/resort/%E0%A4%A', resorts), { view: 'list' });
 });
+
+test('주소 해석: 카메라 번호', () => {
+  const resorts = [{ id: 'jisan', mode: 'direct', cams: [{}, {}, {}] }, { id: 'muju', mode: 'official', cams: [] }];
+  assert.deepEqual(parseRoute('#/resort/jisan/2', resorts), { view: 'detail', resort: resorts[0], cam: 1 });
+  assert.deepEqual(parseRoute('#/resort/jisan/1', resorts), { view: 'detail', resort: resorts[0], cam: 0 });
+  // 없는 번호는 무시하고 스키장 화면을 연다
+  assert.deepEqual(parseRoute('#/resort/jisan/4', resorts), { view: 'detail', resort: resorts[0] });
+  assert.deepEqual(parseRoute('#/resort/jisan/0', resorts), { view: 'detail', resort: resorts[0] });
+  assert.deepEqual(parseRoute('#/resort/jisan/x', resorts), { view: 'detail', resort: resorts[0] });
+  assert.deepEqual(parseRoute('#/resort/muju/1', resorts), { view: 'detail', resort: resorts[1] });
+  assert.deepEqual(parseRoute('#/resort/nope/1', resorts), { view: 'list' });
+});

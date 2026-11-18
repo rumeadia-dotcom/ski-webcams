@@ -180,3 +180,22 @@ test('우리 사이트 경유를 먼저 쓰고, 실패하면 날씨 서버에 �
   const mod = await import('../js/weather.js');
   assert.equal(mod.lastWeatherError, null);
 });
+
+test('목록 한 줄 요약: 지금 눈·비가 먼저, 다음은 오늘·내일 적설', async () => {
+  const { weatherNote } = await import('../js/weather.js');
+  const days = (today, tomorrow) => [
+    { snow: 9, isToday: false },
+    { snow: today, isToday: true },
+    { snow: tomorrow, isToday: false },
+    { snow: 7, isToday: false },
+  ];
+  assert.deepEqual(weatherNote({ kind: 'snow', days: days(2, 3) }), { kind: 'snow', text: '지금 눈' });
+  assert.deepEqual(weatherNote({ kind: 'rain', days: days(0, 3) }), { kind: 'rain', text: '지금 비' });
+  assert.deepEqual(weatherNote({ kind: 'thunder', days: days(0, 0) }), { kind: 'rain', text: '지금 비' });
+  assert.deepEqual(weatherNote({ kind: 'cloudy', days: days(2.14, 3) }), { kind: 'snow', text: '오늘 눈 2.1cm' });
+  assert.deepEqual(weatherNote({ kind: 'clear', days: days(0, 5) }), { kind: 'snow', text: '내일 눈 5cm' });
+  assert.equal(weatherNote({ kind: 'clear', days: days(0.04, 0) }), null); // 반올림하면 0
+  assert.equal(weatherNote({ kind: 'clear', days: days(undefined, undefined) }), null);
+  assert.deepEqual(weatherNote({ kind: 'clear', days: [{ snow: 3, isToday: true }] }), { kind: 'snow', text: '오늘 눈 3cm' }); // 내일이 없어도 된다
+  assert.equal(weatherNote(undefined), null);
+});

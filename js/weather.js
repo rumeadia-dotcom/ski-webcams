@@ -47,6 +47,21 @@ function parseLocation(loc) {
   };
 }
 
+// 목록에 붙이는 한 줄 요약. 지금 내리는 눈·비가 먼저고, 없으면 오늘·내일 예상 적설을 알린다.
+export function weatherNote(w) {
+  if (!w) return null;
+  if (w.kind === 'snow') return { kind: 'snow', text: '지금 눈' };
+  if (w.kind === 'rain' || w.kind === 'thunder') return { kind: 'rain', text: '지금 비' };
+  const days = Array.isArray(w.days) ? w.days : [];
+  const today = days.findIndex((d) => d.isToday);
+  if (today < 0) return null;
+  for (const [offset, label] of [[0, '오늘'], [1, '내일']]) {
+    const cm = Math.round((days[today + offset]?.snow ?? 0) * 10) / 10;
+    if (cm > 0) return { kind: 'snow', text: `${label} 눈 ${cm}cm` };
+  }
+  return null;
+}
+
 // 좌표가 여러 개면 배열, 하나면 객체로 응답이 온다.
 export function parseWeather(json, resorts) {
   const list = Array.isArray(json) ? json : [json];
