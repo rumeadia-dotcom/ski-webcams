@@ -35,19 +35,19 @@ typography:
     lineHeight: 1
   figure:
     fontFamily: "-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Noto Sans KR', 'Malgun Gothic', sans-serif"
-    fontSize: "26px"
+    fontSize: "28px"
     fontWeight: 700
     lineHeight: 1.2
-    letterSpacing: "-0.01em"
+    letterSpacing: "-0.02em"
   title:
     fontFamily: "-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Noto Sans KR', 'Malgun Gothic', sans-serif"
-    fontSize: "20px"
+    fontSize: "22px"
     fontWeight: 700
     lineHeight: 1.5
     letterSpacing: "-0.01em"
   row:
     fontFamily: "-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Noto Sans KR', 'Malgun Gothic', sans-serif"
-    fontSize: "17px"
+    fontSize: "18px"
     fontWeight: 600
     lineHeight: 1.5
   body:
@@ -57,7 +57,7 @@ typography:
     lineHeight: 1.5
   label:
     fontFamily: "-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Noto Sans KR', 'Malgun Gothic', sans-serif"
-    fontSize: "13px"
+    fontSize: "14px"
     fontWeight: 400
     lineHeight: 1.5
   stamp:
@@ -176,16 +176,21 @@ components:
 **Character:** 별도 글꼴을 내려받지 않는다. 링크를 누른 뒤 영상이 뜨기까지의 시간을 글꼴에 쓰지 않기 위해서다. 개성은 크기와 굵기의 대비로 낸다.
 
 ### Hierarchy
-- **Headline** (700, 40px, 줄 높이 1): 현재 기온. 한 화면에 하나.
-- **Figure** (700, 26px): 내 출발지의 소요 시간.
-- **Title** (700, 20px): 화면 제목(사이트 이름, 스키장 이름).
-- **Row** (600, 17px): 목록의 스키장 이름과 기온.
-- **Body** (400, 16px, 줄 높이 1.5): 버튼, 안내 문장, 출발지 줄.
-- **Label** (400, 13px): 목록 설명, 일별 날씨 칸, 각주.
-- **Stamp** (400, 12px): 기준 시각, 정체 정도 글자, 일별 강수·적설량. 가장 작은 크기다.
+일곱 단계이고, 이웃한 단계는 2px 이상 차이 난다. 코드에서는 `--fs-*` 변수로 쓴다.
+- **Headline** (700, 40px, 줄 높이 1, `--fs-display`): 현재 기온. 한 화면에 하나.
+- **Figure** (700, 28px, `--fs-figure`): 내 출발지의 소요 시간.
+- **Title** (700, 22px, `--fs-title`): 화면 제목(사이트 이름, 스키장 이름).
+- **Row** (600, 18px, `--fs-item`): 목록의 스키장 이름과 기온.
+- **Body** (400, 16px, 줄 높이 1.5, `--fs-body`): 문장, 주 버튼, 출발지 줄, 구역 제목(600).
+- **Label** (400, 14px, `--fs-label`): 목록 설명, 일별 날씨 칸, 카메라 버튼, 전광판 한 줄(600), 안내.
+- **Stamp** (400, 12px, `--fs-meta`): 기준 시각, 정체 정도 글자, 일별 강수·적설량, 각주. 가장 작은 크기다.
 
 ### Named Rules
 **12px 아래는 없다.** 야외에서 읽어야 하므로 어떤 글자도 12px보다 작게 쓰지 않는다.
+
+**단계 밖의 크기는 쓰지 않는다.** 새 글자가 필요하면 일곱 단계 중 하나를 고른다. 13px, 15px, 17px 같은 사이 값을 만들지 않는다.
+
+**낱말 중간에서 줄을 바꾸지 않는다.** 한글 문장은 `word-break: keep-all`로 낱말 단위로 줄을 바꾼다.
 
 **숫자는 폭을 맞춘다.** 기온, 시간, 거리는 `font-variant-numeric: tabular-nums`로 자릿수 폭을 고정한다.
 
@@ -237,21 +242,21 @@ components:
 - 카드 안에 카드를 넣지 않는다. 날씨, 교통, 공식 페이지 안내가 각각 하나의 카드다.
 
 ### List Row
-- 왼쪽 52px 즐겨찾기 별, 가운데 스키장 이름(17px 600)과 설명(13px 회색), 오른쪽 기온과 날씨 아이콘, 그 아래 눈·비 요약(12px 600).
+- 왼쪽 52px 즐겨찾기 별, 가운데 스키장 이름(18px 600)과 설명(14px 회색), 오른쪽 기온과 날씨 아이콘, 그 아래 눈·비 요약(12px 600).
 - 행 높이 최소 64px, 행 사이 1px 구분선. 즐겨찾기와 나머지 사이는 8px 바탕색 띠.
 
 ### Day Cell
 - 요일, 날씨 아이콘, 최고, 최저, 강수 또는 적설을 세로로 쌓는다. 오늘 칸만 물들임 배경과 굵은 글자.
 
 ### Traffic Rows
-- 내 출발지 한 줄: 회색 "수원에서"와 26px 굵은 소요 시간, 거리, 정체 점.
+- 내 출발지 한 줄: 회색 "수원에서"와 28px 굵은 소요 시간, 거리, 정체 점.
 - 다른 출발지: 44px 높이의 줄 전체가 버튼. 누르면 내 출발지가 바뀐다.
 
 ### Video Stage
 - 16:9, 밤 무대 배경. 상태 문구(불러오는 중, 송출 없음, 재생 제한)는 영상 위 가운데에 겹쳐 보여 준다.
 
 ### Board (전광판 한 줄)
-- 영상 바로 아래에 붙는 밤 무대색 띠. 지금 날씨·기온과 내 출발지 소요 시간을 15px 600으로 한 줄에 둔다. 라이트 화면에서도 어둡다(영상의 일부로 읽히게).
+- 영상 바로 아래에 붙는 밤 무대색 띠. 지금 날씨·기온과 내 출발지 소요 시간을 14px 600으로 한 줄에 둔다. 라이트 화면에서도 어둡다(영상의 일부로 읽히게).
 - 조각을 누르면 해당 구역으로 내려간다. 출발지를 고르지 않은 사람에게는 "출발지 고르기" 조각을 보여 준다.
 - 영상에 붙어 있을 때만 쓴다. 영상이 없는 스키장에는 두지 않는다(바로 아래 날씨 카드와 내용이 겹친다).
 
@@ -268,7 +273,7 @@ components:
 ## Do's and Don'ts
 
 ### Do:
-- **Do** 영상과 숫자를 가장 크게 둔다. 설명은 13px 회색으로 물린다.
+- **Do** 영상과 숫자를 가장 크게 둔다. 설명은 14px 회색으로 물린다.
 - **Do** 날씨와 교통처럼 시간이 지나면 달라지는 데이터에는 "14:45 기준" 같은 기준 시각을 붙인다.
 - **Do** 터치 영역을 48px로 잡는다(문장 속 링크 제외, 최소 44px).
 - **Do** 라이트와 다크 모두에서 본문 명암비 4.5:1 이상을 확인한다.

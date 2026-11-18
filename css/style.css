@@ -14,6 +14,14 @@
   --stage: #0b1118;
   --stage-text: #e8eef3;
   --tap: 48px;
+  /* 글자 크기 단계. 역할마다 하나씩이고, 이웃한 단계는 2px 이상 차이 난다. */
+  --fs-meta: 12px;    /* 기준 시각, 단위, 각주 */
+  --fs-label: 14px;   /* 설명, 일별 칸, 보조 버튼 */
+  --fs-body: 16px;    /* 문장, 주 버튼, 구역 제목 */
+  --fs-item: 18px;    /* 목록의 스키장 이름과 기온 */
+  --fs-title: 22px;   /* 화면 제목 */
+  --fs-figure: 28px;  /* 내 출발지 소요 시간 */
+  --fs-display: 40px; /* 현재 기온 */
   --flake: #7fb0e3;
 }
 
@@ -44,8 +52,10 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Noto Sans KR", "Malgun Gothic", sans-serif;
+  font: var(--fs-body)/1.5 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Noto Sans KR", "Malgun Gothic", sans-serif;
   -webkit-font-smoothing: antialiased;
+  word-break: keep-all; /* 한글은 낱말 중간에서 줄을 바꾸지 않는다 */
+  overflow-wrap: anywhere;
 }
 
 #app {
@@ -74,7 +84,7 @@ a { text-underline-offset: 3px; }
 
 .muted { color: var(--muted); }
 .link-btn { min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--accent); text-decoration: underline; cursor: pointer; }
-.small { font-size: 13px; }
+.small { font-size: var(--fs-meta); text-wrap: pretty; }
 
 /* 상단 */
 .top {
@@ -93,9 +103,9 @@ a { text-underline-offset: 3px; }
   flex: 1;
   min-width: 0;
   margin: 0;
-  font-size: 20px;
+  font-size: var(--fs-title);
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -141,7 +151,7 @@ a { text-underline-offset: 3px; }
   border-radius: 12px;
   background: var(--text);
   color: var(--bg);
-  font-size: 14px;
+  font-size: var(--fs-label);
   overflow-wrap: anywhere;
   box-shadow: 0 4px 16px rgb(0 0 0 / 0.25);
 }
@@ -152,7 +162,7 @@ a { text-underline-offset: 3px; }
   border-radius: 12px;
   background: var(--surface);
   color: var(--muted);
-  font-size: 14px;
+  font-size: var(--fs-label);
 }
 
 /* 목록 화면 제목 아래의 산 능선 */
@@ -233,8 +243,8 @@ a { text-underline-offset: 3px; }
   text-decoration: none;
 }
 .row-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.row-name { font-size: 17px; font-weight: 600; }
-.row-sub { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
+.row-name { font-size: var(--fs-item); font-weight: 600; line-height: 1.35; letter-spacing: -0.01em; }
+.row-sub { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: var(--fs-label); }
 .row-sub.is-live::before {
   content: "";
   flex: none;
@@ -244,9 +254,9 @@ a { text-underline-offset: 3px; }
 }
 .row-weather { flex: none; display: flex; flex-direction: column; align-items: flex-end; }
 .row-now { display: flex; align-items: center; gap: 6px; }
-.row-note { font-size: 12px; font-weight: 600; white-space: nowrap; }
+.row-note { font-size: var(--fs-meta); font-weight: 600; white-space: nowrap; }
 .row-weather.is-loading { color: var(--muted); }
-.row-temp { font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.row-temp { font-size: var(--fs-item); font-weight: 600; font-variant-numeric: tabular-nums; }
 
 /* 상세 */
 .detail { display: flex; flex-direction: column; gap: 12px; }
@@ -281,7 +291,7 @@ a { text-underline-offset: 3px; }
   text-align: center;
 }
 .overlay[hidden] { display: none; }
-.overlay p { margin: 0; }
+.overlay p { margin: 0; text-wrap: balance; }
 .overlay-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .btn-quiet { background: transparent; color: var(--stage-text); border: 1px solid currentColor; }
 
@@ -311,8 +321,9 @@ a { text-underline-offset: 3px; }
   padding: 0 16px;
   background: var(--stage);
   color: var(--stage-text);
-  font-size: 15px;
+  font-size: var(--fs-label);
   font-weight: 600;
+  letter-spacing: 0.01em; /* 어두운 바탕의 밝은 글자는 자간을 조금 넓힌다 */
   font-variant-numeric: tabular-nums;
 }
 .board[hidden] { display: none; }
@@ -345,8 +356,8 @@ a { text-underline-offset: 3px; }
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface);
-  font-size: 15px;
-  line-height: 1.3;
+  font-size: var(--fs-label);
+  line-height: 1.35;
   text-align: left;
   overflow-wrap: anywhere;
   cursor: pointer;
@@ -367,7 +378,7 @@ a { text-underline-offset: 3px; }
   align-items: center;
   gap: 4px;
   min-height: 44px;
-  font-size: 15px;
+  font-size: var(--fs-label);
 }
 
 /* 우리 사이트에서 재생하지 않는 스키장: 낮은 안내 카드 */
@@ -382,7 +393,7 @@ a { text-underline-offset: 3px; }
   border-radius: 16px;
   background: var(--surface);
 }
-.linkout p { flex: 1 1 12em; margin: 0; }
+.linkout p { flex: 1 1 12em; margin: 0; text-wrap: balance; }
 
 /* 교통상황 */
 .traffic { display: flex; flex-direction: column; gap: 8px; }
@@ -395,9 +406,9 @@ a { text-underline-offset: 3px; }
   border-radius: 16px;
   background: var(--surface);
 }
-.stamp { margin-left: auto; align-self: flex-start; color: var(--muted); font-size: 12px; white-space: nowrap; }
+.stamp { margin-left: auto; align-self: flex-start; color: var(--muted); font-size: var(--fs-meta); white-space: nowrap; }
 .traffic-head { display: flex; align-items: baseline; gap: 8px; }
-.traffic-title { margin: 0; font-size: 15px; font-weight: 600; }
+.traffic-title { margin: 0; font-size: var(--fs-body); font-weight: 600; }
 .btn-line {
   align-self: flex-start;
   min-height: var(--tap);
@@ -411,10 +422,10 @@ a { text-underline-offset: 3px; }
 }
 /* 내 출발지 한 줄 */
 .mine { position: relative; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px; }
-.mine-from { color: var(--muted); font-size: 14px; }
+.mine-from { color: var(--muted); font-size: var(--fs-label); }
 .mine-time { font-variant-numeric: tabular-nums; }
-.mine-time strong { font-size: 26px; line-height: 1.2; letter-spacing: -0.01em; }
-.more summary { display: flex; align-items: center; gap: 6px; min-height: 44px; color: var(--accent); font-size: 14px; cursor: pointer; list-style: none; }
+.mine-time strong { font-size: var(--fs-figure); line-height: 1.2; letter-spacing: -0.02em; }
+.more summary { display: flex; align-items: center; gap: 6px; min-height: 44px; color: var(--accent); font-size: var(--fs-label); cursor: pointer; list-style: none; }
 .more summary::-webkit-details-marker { display: none; }
 /* 접힘·펼침을 알리는 꺾쇠 */
 .more summary::after {
@@ -448,7 +459,7 @@ a { text-underline-offset: 3px; }
   cursor: pointer;
 }
 .route-time { flex: none; font-variant-numeric: tabular-nums; }
-.level { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; min-width: 3.4em; font-size: 12px; color: var(--muted); }
+.level { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; min-width: 3.4em; font-size: var(--fs-meta); color: var(--muted); }
 .level::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--level); }
 .level-smooth { --level: #1f9d55; }
 .level-slow { --level: #e0a800; }
@@ -464,9 +475,9 @@ a { text-underline-offset: 3px; }
 .weather p { margin: 0; }
 .weather.is-loading { min-height: 270px; }
 .now { display: flex; align-items: center; gap: 12px; }
-.now-temp { font-size: 40px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
-.now-text { display: flex; flex-direction: column; font-size: 14px; color: var(--muted); }
-.now-text strong { color: var(--text); font-size: 16px; }
+.now-temp { font-size: var(--fs-display); font-weight: 700; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.now-text { display: flex; flex-direction: column; font-size: var(--fs-label); color: var(--muted); }
+.now-text strong { color: var(--text); font-size: var(--fs-body); }
 
 /* 한 화면에 6칸 반이 보인다. 반쯤 걸친 칸이 옆으로 더 있다는 것을 알려 준다. */
 .days {
@@ -492,7 +503,8 @@ a { text-underline-offset: 3px; }
   gap: 2px;
   padding: 8px 0;
   border-radius: 10px;
-  font-size: 13px;
+  font-size: var(--fs-label);
+  line-height: 1.4;
   font-variant-numeric: tabular-nums;
 }
 .day.is-today { background: var(--today); font-weight: 600; }
@@ -500,7 +512,7 @@ a { text-underline-offset: 3px; }
 .day.is-today .day-name { color: var(--text); }
 .day-max { font-weight: 600; }
 .day-min { color: var(--muted); }
-.day-precip { color: var(--muted); font-size: 12px; letter-spacing: -0.02em; white-space: nowrap; }
+.day-precip { color: var(--muted); font-size: var(--fs-meta); letter-spacing: -0.02em; white-space: nowrap; }
 .day-precip.is-snow { color: var(--snow); font-weight: 600; }
 
 /* 누르는 순간과 마우스를 올렸을 때의 반응. 표면색을 살짝 물들이는 한 가지 방식만 쓴다. */
@@ -525,7 +537,7 @@ a { text-underline-offset: 3px; }
 /* 전광판 조각을 눌러 내려왔을 때 고정된 제목 줄에 가리지 않게 한다. */
 .weather, .traffic { scroll-margin-top: 68px; }
 
-.footer { margin-top: 24px; color: var(--muted); font-size: 12px; }
+.footer { margin-top: 24px; color: var(--muted); font-size: var(--fs-meta); text-wrap: pretty; }
 .footer p { margin: 0 0 4px; }
 
 @media (min-width: 600px) {
