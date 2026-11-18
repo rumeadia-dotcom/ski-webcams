@@ -33,7 +33,7 @@ function outputFor(metafile, entry) {
 // 치환 대상이 정확히 한 번 있어야 한다. 아니면 index.html 이 바뀐 것이므로 빌드를 실패시킨다.
 function replaceOnce(html, pattern, replacement) {
   const matches = html.match(new RegExp(pattern.source, 'g')) ?? [];
-  if (matches.length !== 1) throw new Error(`index.html 에서 ${pattern} 이 ${matches.length}번 발견됐습니다(1번이어야 함)`);
+  if (matches.length !== 1) throw new Error(`HTML 에서 ${pattern} 이 ${matches.length}번 발견됐습니다(1번이어야 함)`);
   return html.replace(pattern, replacement);
 }
 
@@ -61,6 +61,15 @@ const js = await build({
   define: { __ICON_URL__: JSON.stringify(icon) },
 });
 const css = await build({ ...common, entryPoints: ['css/style.css'] });
+
+// 통계 대시보드(로그인해야 보이는 별도 페이지)
+const statsJs = await build({ ...common, entryPoints: ['js/stats.js'], format: 'esm', target: ['es2020'] });
+const statsCss = await build({ ...common, entryPoints: ['css/stats.css'] });
+let statsHtml = await readFile(path.join(root, 'stats.html'), 'utf8');
+statsHtml = replaceOnce(statsHtml, /href="css\/stats\.css\?v=\d+"/, `href="${outputFor(statsCss.metafile, 'css/stats.css')}"`);
+statsHtml = replaceOnce(statsHtml, /src="js\/stats\.js\?v=\d+"/, `src="${outputFor(statsJs.metafile, 'js/stats.js')}"`);
+statsHtml = replaceOnce(statsHtml, /href="img\/sticker-144\.png"/, `href="${icon}"`);
+await writeFile(path.join(dist, 'stats.html'), statsHtml);
 
 let html = await readFile(path.join(root, 'index.html'), 'utf8');
 html = replaceOnce(html, /href="css\/style\.css\?v=\d+"/, `href="${outputFor(css.metafile, 'css/style.css')}"`);

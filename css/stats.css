@@ -1,0 +1,150 @@
+:root {
+  --plane: #f9f9f7;
+  --surface: #fcfcfb;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --line: #e4e3df;
+  --series-1: #2a78d6; /* 재생·조회 등 기본 막대 */
+  --series-2: #eb6834; /* 송출 없음 */
+  --track: #efeeea;
+  --accent: #1c5cab;
+  --accent-ink: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --plane: #0d0d0d;
+    --surface: #1a1a19;
+    --ink: #f0efec;
+    --ink-2: #c3c2b7;
+    --line: #2e2e2b;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --track: #262624;
+    --accent: #6da7ec;
+    --accent-ink: #0d0d0d;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--plane);
+  color: var(--ink);
+  font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Noto Sans KR", "Malgun Gothic", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+#stats {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 0 16px calc(32px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-top: 20px; }
+.head h1 { margin: 0; font-size: 22px; letter-spacing: -0.01em; }
+.head-link { color: var(--accent); font-size: 14px; }
+
+.filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.seg.is-on { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+.seg-refresh { margin-left: auto; color: var(--ink-2); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.alert { margin: 0; padding: 12px 14px; border: 1px solid var(--series-2); border-radius: 12px; background: var(--surface); }
+
+.card { padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); min-width: 0; }
+.card h2 { margin: 0 0 2px; font-size: 16px; }
+.card-desc { margin: 0 0 12px; color: var(--ink-2); font-size: 13px; }
+.card h2 + :not(.card-desc) { margin-top: 12px; }
+.empty { margin: 8px 0 0; color: var(--ink-2); }
+.foot { margin: 4px 0 0; color: var(--ink-2); font-size: 12px; }
+
+.login { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+.login p { margin: 0; }
+.btn {
+  min-height: 48px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* 요약 숫자 */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+.tile { display: flex; flex-direction: column; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.tile-label { color: var(--ink-2); font-size: 13px; }
+.tile-value { font-size: 30px; font-weight: 700; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.tile-note { color: var(--ink-2); font-size: 12px; }
+
+/* 날짜별 막대 */
+.daily-plot { display: flex; align-items: flex-end; gap: 2px; height: 160px; border-bottom: 1px solid var(--line); }
+.daily-col { position: relative; flex: 1; height: 100%; display: flex; align-items: flex-end; justify-content: center; min-width: 0; }
+.daily-bar { width: 100%; max-width: 28px; min-height: 1px; border-radius: 4px 4px 0 0; background: var(--series-1); }
+.daily-col:hover .daily-bar, .daily-col:focus .daily-bar { filter: brightness(1.15); }
+.daily-col:hover::after, .daily-col:focus::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--plane);
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.daily-col:first-child::after { left: 0; transform: none; }
+.daily-col:last-child::after { left: auto; right: 0; transform: none; }
+.daily-axis { display: flex; gap: 2px; margin-top: 4px; color: var(--ink-2); font-size: 11px; }
+.daily-axis span { flex: 1; min-width: 0; text-align: center; white-space: nowrap; overflow: visible; }
+
+.table-view { margin-top: 10px; font-size: 13px; }
+.table-view summary { color: var(--accent); cursor: pointer; min-height: 32px; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; color: var(--ink-2); font-weight: 400; font-size: 12px; padding: 4px 0; }
+td { padding: 6px 0; border-top: 1px solid var(--line); vertical-align: middle; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* 순위 막대 */
+.rank { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.rank-row { display: grid; grid-template-columns: minmax(84px, 9em) 1fr auto; align-items: center; column-gap: 10px; }
+.rank-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rank-track { display: block; height: 10px; border-radius: 4px; background: var(--track); }
+.rank-bar { display: block; height: 100%; min-width: 2px; border-radius: 0 4px 4px 0; background: var(--series-1); }
+.rank-bar.is-offline { background: var(--series-2); }
+.rank-value { font-variant-numeric: tabular-nums; font-size: 14px; }
+.rank-extra { grid-column: 2 / -1; color: var(--ink-2); font-size: 12px; }
+
+/* 카메라 표 */
+.legend { display: flex; gap: 14px; margin-bottom: 6px; color: var(--ink-2); font-size: 12px; }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.swatch { width: 10px; height: 10px; border-radius: 3px; background: var(--series-1); }
+.swatch.is-offline { background: var(--series-2); }
+.cam-table td:first-child { width: 42%; padding-right: 10px; }
+.cam-table td strong { display: block; font-weight: 600; }
+.cam-resort { color: var(--ink-2); font-size: 12px; }
+.cam-cell { display: grid; grid-template-columns: 1fr 2.5em; align-items: center; gap: 6px; padding-right: 8px; }
+.cam-cell .rank-value { text-align: right; }
+
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
