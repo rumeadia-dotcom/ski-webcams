@@ -1,12 +1,12 @@
 import { RESORTS, officialUrlFor } from './data.js';
 import { loadFavorites, toggleFavorite, sortResorts } from './favorites.js';
-import { getWeather, lastWeatherError, weatherNote } from './weather.js';
+import { getWeather, lastWeatherError, weatherNote, amountLabel } from './weather.js';
 import { detectEnv } from './browser.js';
 import { createPlayer } from './player.js';
 import { parseRoute } from './route.js';
 import { createAnalytics } from './analytics.js';
 import { share, shareUrl } from './share.js';
-import { loadTraffic, formatDuration } from './traffic.js';
+import { loadTraffic, formatDuration, loadOrigin, saveOrigin, arrangeRoutes } from './traffic.js';
 
 // 배포용 빌드는 식별값이 붙은 아이콘 경로를 넣어 준다. 개발 중에는 원본 경로를 쓴다.
 const BUILT = typeof __ICON_URL__ === 'string';
@@ -43,7 +43,7 @@ function h(tag, attrs = {}, ...children) {
     else if (key.startsWith('on')) el.addEventListener(key.slice(2), value);
     else el.setAttribute(key, value === true ? '' : value);
   }
-  el.append(...children.filter((c) => c != null && c !== false));
+  el.append(...children.flat().filter((c) => c != null && c !== false));
   return el;
 }
 
@@ -100,10 +100,11 @@ function dayLabel(day) {
   return '일월화수목금토'[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
 }
 
+// 목록에서 이 스키장을 누르면 무엇이 나오는지 미리 알려 준다.
 function camSummary(resort) {
-  if (resort.mode === 'direct') return `웹캠 ${resort.cams.length}`;
-  if (resort.mode === 'official') return `웹캠 ${resort.camCount} · 공식 페이지에서 보기`;
-  return '웹캠 없음';
+  if (resort.mode === 'direct') return h('span', { class: 'row-sub is-live' }, `바로 재생 · 카메라 ${resort.cams.length}`);
+  if (resort.mode === 'official') return h('span', { class: 'row-sub' }, `공식 페이지 · 카메라 ${resort.camCount}`);
+  return h('span', { class: 'row-sub' }, '웹캠 없음');
 }
 
 function officialLink(resort, label, cls) {
@@ -129,9 +130,14 @@ function favButton(resort, onChange) {
     html: ICONS.star,
     onclick: () => {
       state.favorites = toggleFavorite(storage, resort.id, state.favorites);
-      analytics.track(state.favorites.includes(resort.id) ? 'add_favorite' : 'remove_favorite', { resort_id: resort.id });
+      const added = state.favorites.includes(resort.id);
+      analytics.track(added ? 'add_favorite' : 'remove_favorite', { resort_id: resort.id });
+      const y = window.scrollY;
       onChange();
-      document.querySelector(`[data-fav="${resort.id}"]`)?.focus();
+      // 행이 맨 위로 옮겨가도 보던 자리를 지킨다.
+      document.querySelector(`[data-fav="${resort.id}"]`)?.focus({ preventScroll: true });
+      window.scrollTo(0, y);
+      toast(added ? `${resort.name}을(를) 목록 맨 위에 올렸습니다` : `${resort.name} 즐겨찾기를 해제했습니다`);
     },
   });
 }
@@ -191,13 +197,14 @@ function listWeather(resort) {
 
 function renderList() {
   document.title = '스키장 웹캠';
-  const rows = sortResorts(RESORTS, state.favorites).map((resort) =>
-    h('li', { class: 'row' },
+  const favCount = RESORTS.filter((r) => state.favorites.includes(r.id)).length;
+  const rows = sortResorts(RESORTS, state.favorites).map((resort, i) =>
+    h('li', { class: `row${favCount > 0 && i === favCount ? ' is-rest-start' : ''}` },
       favButton(resort, renderList),
       h('a', { class: 'row-link', href: `#/resort/${resort.id}` },
         h('span', { class: 'row-text' },
           h('span', { class: 'row-name' }, resort.name),
-          h('span', { class: 'row-sub' }, camSummary(resort)),
+          camSummary(resort),
         ),
         listWeather(resort),
       ),
@@ -210,7 +217,7 @@ function renderList() {
       h('span', { class: 'top-actions' }, shareButton(null)),
     ),
     state.weather === null ? weatherFailure('notice') : null,
-    h('ul', { class: 'list' }, ...rows),
+    h('main', {}, h('ul', { class: 'list' }, ...rows)),
     footer(),
   );
 }
@@ -218,7 +225,7 @@ function renderList() {
 // ---------- 상세 화면 ----------
 
 function weatherSection(resort) {
-  const section = h('section', { class: 'weather', 'aria-label': '날씨' });
+  const section = h('section', { class: 'weather', 'aria-label': '날씨' }, h('h2', { class: 'sr-only' }, '날씨'));
   if (state.weather === undefined) {
     section.append(h('p', { class: 'muted' }, '날씨를 불러오는 중…'));
     return section;
@@ -228,6 +235,20 @@ function weatherSection(resort) {
     section.append(weatherFailure('muted'));
     return section;
   }
+  const todayIndex = w.days.findIndex((day) => day.isToday);
+  const days = h('ol', { class: 'days', tabindex: '0', 'aria-label': '일별 날씨, 좌우로 스크롤' }, ...w.days.map((day) =>
+    h('li', { class: `day${day.isToday ? ' is-today' : ''}` },
+      h('span', { class: 'day-name' }, dayLabel(day)),
+      icon(day.kind, `kind-${day.kind}`),
+      h('span', { class: 'sr-only' }, `${KIND_LABEL[day.kind]}, 최고 `),
+      h('span', { class: 'day-max' }, temp(day.max)),
+      h('span', { class: 'sr-only' }, ', 최저 '),
+      h('span', { class: 'day-min' }, temp(day.min)),
+      day.snow > 0
+        ? h('span', { class: 'day-precip is-snow' }, h('span', { class: 'sr-only' }, ', 적설 '), amountLabel(day.snow, 'cm'))
+        : h('span', { class: 'day-precip' }, day.precip > 0 ? [h('span', { class: 'sr-only' }, ', 강수 '), amountLabel(day.precip, 'mm')] : '-'),
+    ),
+  ));
   section.append(
     h('div', { class: 'now' },
       icon(w.kind, `icon-lg kind-${w.kind}`),
@@ -238,56 +259,71 @@ function weatherSection(resort) {
       ),
       w.time ? h('span', { class: 'stamp' }, `${w.time} 기준`) : null,
     ),
-    h('ol', { class: 'days', tabindex: '0', 'aria-label': '일별 날씨, 좌우로 스크롤' }, ...w.days.map((day) =>
-      h('li', { class: `day${day.isToday ? ' is-today' : ''}` },
-        h('span', { class: 'day-name' }, dayLabel(day)),
-        icon(day.kind, `kind-${day.kind}`),
-        h('span', { class: 'day-max' }, temp(day.max)),
-        h('span', { class: 'day-min' }, temp(day.min)),
-        day.snow > 0
-          ? h('span', { class: 'day-precip is-snow', 'aria-label': `적설 ${amount(day.snow)}cm` }, `${amount(day.snow)}cm`)
-          : h('span', { class: 'day-precip' }, day.precip > 0 ? `${amount(day.precip)}mm` : '-'),
-      ),
-    )),
-    h('p', { class: 'muted small' }, '지난 3일부터 앞으로 7일까지입니다. 옆으로 밀어서 더 볼 수 있습니다. mm는 강수량, cm는 적설량입니다. 예보 모델 값이라 스키장 발표 수치와 다를 수 있습니다.'),
+    days,
+    h('p', { class: 'muted small' }, 'mm 강수량 · cm 적설량. 예보 모델 값이라 스키장 발표와 다를 수 있습니다.'),
   );
+  // 어제부터 보이게 맞춘다. 오늘과 앞으로의 예보가 한 화면에 더 들어온다.
+  requestAnimationFrame(() => {
+    const yesterday = days.children[todayIndex - 1];
+    if (yesterday) days.scrollLeft = yesterday.offsetLeft - days.offsetLeft;
+  });
   return section;
 }
 
 const LEVEL_LABEL = { smooth: '원활', slow: '서행', jam: '정체' };
 
 // 교통상황: 스키장 화면에 들어오면 바로 불러온다. 서버가 5분 저장한 결과를 준다.
+// 출발지를 한 번 누르면 기억해서, 다음부터는 그 도시를 맨 위에 크게 보여 주고 나머지는 접는다.
 function trafficSection(resort) {
   const section = h('section', { class: 'traffic', 'aria-label': '교통상황' });
   const clock = (at) => new Date(at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
-  const button = (label) => h('button', { class: 'btn-line', type: 'button', onclick: load }, label);
+  const retry = () => h('button', { class: 'btn-line', type: 'button', onclick: load }, '다시 시도');
+  let origin = loadOrigin(storage);
+
+  const level = (route) => (LEVEL_LABEL[route.level]
+    ? h('span', { class: `level level-${route.level}` }, h('span', { class: 'sr-only' }, ', '), LEVEL_LABEL[route.level])
+    : null);
+  const figures = (route) => (route.minutes === null
+    ? [h('span', { class: 'muted' }, '확인 안 됨')]
+    : [h('strong', {}, formatDuration(route.minutes)), h('span', { class: 'muted' }, ` · ${route.km}km`), level(route)]);
+
+  function draw(data) {
+    const { mine, others } = arrangeRoutes(data.routes, origin);
+    const pick = (route) => () => {
+      origin = route.from;
+      saveOrigin(storage, origin);
+      analytics.track('set_origin', { origin });
+      draw(data);
+      section.querySelector('.mine')?.focus();
+    };
+    const list = h('ul', { class: 'routes' }, ...others.map((route) =>
+      h('li', {},
+        h('button', { class: 'route', type: 'button', onclick: pick(route), 'aria-label': `${route.from} 출발을 내 출발지로` },
+          h('span', { class: 'route-name' }, route.from),
+          h('span', { class: 'route-time' }, ...figures(route))))));
+    section.replaceChildren(
+      h('div', { class: 'traffic-head' },
+        h('h2', { class: 'traffic-title' }, '지금 차로 가면'),
+        h('span', { class: 'stamp' }, `${clock(data.at)} 기준`)),
+      mine
+        ? h('p', { class: 'mine', tabindex: '-1' },
+            h('span', { class: 'mine-from' }, `${mine.from}에서`),
+            h('span', { class: 'mine-time' }, ...figures(mine)))
+        : h('p', { class: 'muted small' }, '출발지를 누르면 다음부터 맨 위에 보여 줍니다.'),
+      mine ? h('details', { class: 'more' }, h('summary', {}, '다른 출발지'), list) : list,
+      h('p', { class: 'muted small' }, '시청 출발 기준 예상 시간 · 5분마다 갱신 · 제공 카카오모빌리티'),
+    );
+  }
 
   async function load() {
     section.replaceChildren(h('p', { class: 'muted' }, '교통상황을 불러오는 중…'));
     const data = await loadTraffic(resort.id);
     if (!section.isConnected) return; // 그 사이 다른 화면으로 이동했다
     if (!data) {
-      section.replaceChildren(h('p', { class: 'muted' }, '교통상황을 불러오지 못했습니다.'), button('다시 시도'));
+      section.replaceChildren(h('p', { class: 'muted' }, '교통상황을 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요.'), retry());
       return;
     }
-    section.replaceChildren(
-      h('div', { class: 'traffic-head' },
-        h('h2', { class: 'traffic-title' }, '지금 차로 가면'),
-        h('span', { class: 'stamp' }, `${clock(data.at)} 기준`)),
-      h('ul', { class: 'routes' }, ...data.routes.map((route) =>
-        h('li', { class: 'route' },
-          h('span', { class: 'route-name' }, `${route.from} → ${resort.name}`),
-          route.minutes === null
-            ? h('span', { class: 'muted' }, '확인 안 됨')
-            : h('span', { class: 'route-time' },
-                h('strong', {}, formatDuration(route.minutes)),
-                h('span', { class: 'muted' }, ` · ${route.km}km`),
-                LEVEL_LABEL[route.level]
-                  ? h('span', { class: `level level-${route.level}` }, LEVEL_LABEL[route.level])
-                  : null),
-        ))),
-      h('p', { class: 'muted small' }, `각 도시 시청에서 출발하는 추천 경로입니다. 실시간 교통이 반영된 예상 시간이며 실제와 다를 수 있습니다. 원활·서행·정체는 경로에서 막히는 구간의 비율로 나눈 것입니다. 5분마다 갱신됩니다. 제공: 카카오모빌리티`),
-    );
+    draw(data);
   }
 
   load();
@@ -340,6 +376,7 @@ function directStage(resort, firstCam = 0) {
       const on = active && cam === current;
       buttons[i].classList.toggle('is-on', on);
       buttons[i].setAttribute('aria-pressed', String(on));
+      if (on) buttons[i].scrollIntoView({ block: 'nearest', inline: 'nearest' });
     });
   }
 
@@ -366,22 +403,18 @@ function directStage(resort, firstCam = 0) {
 
 function officialStage(resort) {
   return [
-    h('div', { class: 'stage stage-plain' },
-      h('div', { class: 'overlay' },
-        h('p', {}, '이 스키장은 공식 페이지에서만 볼 수 있습니다'),
-        officialLink(resort, '공식 웹캠 페이지 열기', 'btn'),
-      ),
+    h('section', { class: 'linkout' },
+      h('p', {}, `웹캠 ${resort.camCount}대는 공식 페이지에서 볼 수 있습니다.`),
+      officialLink(resort, '공식 웹캠 페이지 열기', 'btn'),
     ),
   ];
 }
 
 function noneStage(resort) {
   return [
-    h('div', { class: 'stage stage-plain' },
-      h('div', { class: 'overlay' },
-        h('p', {}, '공식 사이트에서 웹캠을 제공하지 않습니다'),
-        officialLink(resort, '리조트 홈페이지 열기', 'btn'),
-      ),
+    h('section', { class: 'linkout' },
+      h('p', {}, '이 스키장은 공개된 웹캠이 없습니다.'),
+      officialLink(resort, '리조트 홈페이지 열기', 'btn'),
     ),
   ];
 }

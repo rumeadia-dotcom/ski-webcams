@@ -80,3 +80,27 @@ export async function loadTraffic(resortId, { fetch = globalThis.fetch, timeoutM
     return null;
   }
 }
+
+// 내 출발지. 한 번 고르면 휴대폰에 기억해 두고, 그 도시를 맨 위에 크게 보여 준다.
+const ORIGIN_KEY = 'ski.origin';
+
+export function loadOrigin(storage) {
+  try {
+    return storage.getItem(ORIGIN_KEY) || null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveOrigin(storage, name) {
+  try {
+    storage.setItem(ORIGIN_KEY, name);
+  } catch {
+    // 저장하지 못하면 이번 화면에서만 유지된다.
+  }
+}
+
+export function arrangeRoutes(routes, origin) {
+  const mine = routes.find((r) => r.from === origin) ?? null;
+  return { mine, others: mine ? routes.filter((r) => r !== mine) : routes };
+}

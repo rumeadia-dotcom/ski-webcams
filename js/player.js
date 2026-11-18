@@ -88,6 +88,7 @@ export function createPlayer(container, { onState, preferNative = false }) {
     video.muted = true;
     video.autoplay = true;
     video.controls = true;
+    video.setAttribute('aria-label', `${cam.name} 실시간 영상`);
     video.playsInline = true;
     video.setAttribute('playsinline', '');
     video.setAttribute('webkit-playsinline', '');

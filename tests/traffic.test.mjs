@@ -125,3 +125,19 @@ test('정체 정도: 구간별 교통 상태를 거리로 따져 원활·서행�
   assert.equal(level(), null);
   assert.equal(congestionLevel(undefined), null);
 });
+
+test('내 출발지: 저장하고, 고른 도시를 맨 앞으로 나눈다', async () => {
+  const { loadOrigin, saveOrigin, arrangeRoutes } = await import('../js/traffic.js');
+  const map = new Map();
+  const storage = { getItem: (k) => (map.has(k) ? map.get(k) : null), setItem: (k, v) => map.set(k, String(v)) };
+  assert.equal(loadOrigin(storage), null);
+  saveOrigin(storage, '수원');
+  assert.equal(loadOrigin(storage), '수원');
+  assert.equal(loadOrigin(undefined), null); // 저장소가 막힌 환경
+  saveOrigin(undefined, '수원'); // 예외 없이 지나간다
+
+  const routes = [{ from: '서울' }, { from: '수원' }, { from: '대전' }];
+  assert.deepEqual(arrangeRoutes(routes, '수원'), { mine: routes[1], others: [routes[0], routes[2]] });
+  assert.deepEqual(arrangeRoutes(routes, null), { mine: null, others: routes });
+  assert.deepEqual(arrangeRoutes(routes, '부산'), { mine: null, others: routes }); // 목록에서 빠진 도시
+});

@@ -206,3 +206,11 @@ test('날씨 기준 시각을 함께 돌려준다', () => {
   assert.equal(parseWeather([loc], [two[0]]).a.time, '14:15');
   assert.equal(parseWeather([location(1, 0)], [two[0]]).a.time, null);
 });
+
+test('일별 강수·적설 표기: 좁은 칸에 맞게 10 이상은 정수로', async () => {
+  const { amountLabel } = await import('../js/weather.js');
+  assert.equal(amountLabel(2.54, 'mm'), '2.5mm');
+  assert.equal(amountLabel(10.4, 'mm'), '10mm');
+  assert.equal(amountLabel(12.5, 'cm'), '13cm');
+  assert.equal(amountLabel(0.04, 'cm'), '0cm');
+});

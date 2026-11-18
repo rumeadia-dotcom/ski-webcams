@@ -48,6 +48,12 @@ function parseLocation(loc) {
   };
 }
 
+// 일별 칸에 넣는 강수·적설 표기. 칸이 좁아 10 이상은 소수점을 뺀다.
+export function amountLabel(value, unit) {
+  const rounded = value >= 9.95 ? Math.round(value) : Math.round(value * 10) / 10;
+  return `${rounded}${unit}`;
+}
+
 // 목록에 붙이는 한 줄 요약. 지금 내리는 눈·비가 먼저고, 없으면 오늘·내일 예상 적설을 알린다.
 export function weatherNote(w) {
   if (!w) return null;
