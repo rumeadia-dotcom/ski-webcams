@@ -397,7 +397,8 @@ function directStage(resort, firstCam = 0) {
   const media = h('div', { class: 'media' });
   const overlay = h('div', { class: 'overlay', role: 'status' });
   const buttons = resort.cams.map((cam) =>
-    h('button', { class: 'cam', type: 'button', onclick: () => start(cam) }, cam.name));
+    h('button', { class: 'cam', type: 'button', onclick: () => start(cam) }, cam.name, h('span', { class: 'sr-only' })));
+  const off = new Set(); // 이번 화면에서 송출이 없다고 확인된 카메라
   let current = null;
   let startedAuto = false;
 
@@ -407,7 +408,7 @@ function directStage(resort, firstCam = 0) {
     playing: () => [],
     blocked: () => [],
     offline: () => [
-      h('p', {}, '현재 송출이 없습니다'),
+      h('p', {}, h('strong', {}, current?.name ?? ''), ' 카메라는 현재 송출이 없습니다'),
       h('div', { class: 'overlay-actions' },
         h('button', { class: 'btn btn-quiet', type: 'button', onclick: () => start(current) }, '다시 시도'),
         officialLink(resort, '공식 페이지에서 보기', 'btn'),
@@ -434,11 +435,15 @@ function directStage(resort, firstCam = 0) {
     }
     overlay.replaceChildren(...messages[next]());
     overlay.hidden = next === 'playing' || next === 'blocked';
-    const active = next === 'loading' || next === 'playing' || next === 'blocked';
+    // 송출이 없거나 멈춘 상태에서도 어느 카메라를 고른 것인지 표시를 유지한다.
+    if (current && next === 'offline') off.add(current);
+    if (current && next === 'playing') off.delete(current);
     resort.cams.forEach((cam, i) => {
-      const on = active && cam === current;
+      const on = cam === current;
       buttons[i].classList.toggle('is-on', on);
+      buttons[i].classList.toggle('is-off', off.has(cam));
       buttons[i].setAttribute('aria-pressed', String(on));
+      buttons[i].lastChild.textContent = off.has(cam) ? ', 송출 없음' : '';
     });
   }
 
