@@ -281,6 +281,33 @@ button { font: inherit; color: inherit; }
   font-size: 15px;
 }
 
+/* 교통상황 */
+.traffic { display: flex; flex-direction: column; gap: 8px; }
+.traffic p { margin: 0; }
+.traffic:has(.routes) {
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.traffic-title { margin: 0; font-size: 15px; font-weight: 600; }
+.btn-line {
+  min-height: var(--tap);
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.routes { margin: 0; padding: 0; list-style: none; }
+.route { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 8px 0; }
+.route + .route { border-top: 1px solid var(--line); }
+.route-name { min-width: 0; }
+.route-time { flex: none; font-variant-numeric: tabular-nums; }
+
 /* 날씨 */
 .weather {
   padding: 16px;

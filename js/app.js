@@ -6,6 +6,7 @@ import { createPlayer } from './player.js';
 import { parseRoute } from './route.js';
 import { createAnalytics } from './analytics.js';
 import { share, shareUrl } from './share.js';
+import { loadTraffic, formatDuration } from './traffic.js';
 
 // 배포용 빌드는 식별값이 붙은 아이콘 경로를 넣어 준다. 개발 중에는 원본 경로를 쓴다.
 const BUILT = typeof __ICON_URL__ === 'string';
@@ -252,6 +253,40 @@ function weatherSection(resort) {
   return section;
 }
 
+// 교통상황: 버튼을 눌렀을 때만 불러온다(길찾기 호출 수를 아끼기 위해).
+function trafficSection(resort) {
+  const section = h('section', { class: 'traffic', 'aria-label': '교통상황' });
+  const clock = (at) => new Date(at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+  const button = (label) => h('button', { class: 'btn-line', type: 'button', onclick: load }, label);
+
+  async function load() {
+    section.replaceChildren(h('p', { class: 'muted' }, '교통상황을 불러오는 중…'));
+    analytics.track('view_traffic', { resort_id: resort.id });
+    const data = await loadTraffic(resort.id);
+    if (!section.isConnected) return; // 그 사이 다른 화면으로 이동했다
+    if (!data) {
+      section.replaceChildren(h('p', { class: 'muted' }, '교통상황을 불러오지 못했습니다.'), button('다시 시도'));
+      return;
+    }
+    section.replaceChildren(
+      h('h2', { class: 'traffic-title' }, '지금 차로 가면'),
+      h('ul', { class: 'routes' }, ...data.routes.map((route) =>
+        h('li', { class: 'route' },
+          h('span', { class: 'route-name' }, `${route.from} → ${resort.name}`),
+          route.minutes === null
+            ? h('span', { class: 'muted' }, '확인 안 됨')
+            : h('span', { class: 'route-time' },
+                h('strong', {}, formatDuration(route.minutes)),
+                h('span', { class: 'muted' }, ` · ${route.km}km`)),
+        ))),
+      h('p', { class: 'muted small' }, `${clock(data.at)} 기준, 각 도시 시청에서 출발하는 추천 경로입니다. 실시간 교통이 반영된 예상 시간이며 실제와 다를 수 있습니다. 제공: 카카오모빌리티`),
+    );
+  }
+
+  section.append(button('교통상황 보기'));
+  return section;
+}
+
 function directStage(resort, firstCam = 0) {
   const media = h('div', { class: 'media' });
   const overlay = h('div', { class: 'overlay', role: 'status' });
@@ -359,7 +394,7 @@ function renderDetail(resort, firstCam) {
       h('h1', {}, resort.name),
       h('span', { class: 'top-actions' }, shareButton(resort), fav),
     ),
-    h('main', { class: 'detail' }, ...stage, weatherSlot),
+    h('main', { class: 'detail' }, ...stage, weatherSlot, trafficSection(resort)),
     footer(),
   );
   // 스키장에 들어오면 첫 번째 웹캠을 바로 재생한다. 가려진 탭에서는 데이터를 쓰지 않도록 건너뛴다.
