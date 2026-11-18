@@ -35,6 +35,7 @@ const ALLOWED = {
 
 // 안내가 필요 없으면 null.
 export function browserAdvice({ os, browser, inApp }) {
+  if (inApp === 'kakaotalk') return null; // 카카오톡 안에서는 정상 동작이 확인되어 안내하지 않는다
   if (inApp) {
     return os === 'ios'
       ? '앱 안 브라우저에서는 영상이 재생되지 않을 수 있습니다. Safari로 열어 주세요.'

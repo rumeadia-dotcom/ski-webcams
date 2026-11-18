@@ -52,7 +52,8 @@ test('추천 브라우저가 아니면 OS 에 맞는 안내', () => {
 });
 
 test('인앱 브라우저 안내', () => {
-  assert.equal(advice(UA.iphoneKakao), '앱 안 브라우저에서는 영상이 재생되지 않을 수 있습니다. Safari로 열어 주세요.');
+  assert.equal(advice(UA.iphoneKakao), null); // 카카오톡 안에서는 정상 동작이 확인되어 안내하지 않는다
+  assert.equal(advice(UA.androidChrome + ' KAKAOTALK 11.2.0'), null);
   assert.equal(advice(UA.androidNaver), '앱 안 브라우저에서는 영상이 재생되지 않을 수 있습니다. Chrome으로 열어 주세요.');
   assert.equal(advice(UA.androidInstagram), '앱 안 브라우저에서는 영상이 재생되지 않을 수 있습니다. Chrome으로 열어 주세요.');
 });
