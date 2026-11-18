@@ -231,6 +231,8 @@ a { text-underline-offset: 3px; }
   border: 0;
 }
 .media video { object-fit: contain; background: var(--stage); }
+.media video:focus-visible { outline-offset: -3px; }
+.top h1:focus { outline: none; } /* 화면 이동 때 코드로 옮긴 포커스 */
 .overlay {
   position: absolute;
   inset: 0;
@@ -263,29 +265,22 @@ a { text-underline-offset: 3px; }
   cursor: pointer;
 }
 
-/* 카메라는 한 줄에 두고 옆으로 민다. 세로로 쌓으면 날씨와 교통이 화면 밖으로 밀린다. */
-.cams {
-  display: flex;
-  gap: 8px;
-  margin: 0 -16px;
-  padding: 2px 16px;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scroll-padding: 0 16px;
-  scrollbar-width: none;
-}
-.cams::-webkit-scrollbar { display: none; }
+/* 카메라는 2열로 모두 보여 준다. 숨는 카메라가 없어야 한다. */
+.cams { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .cam {
-  flex: none;
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
   min-height: var(--tap);
-  padding: 8px 14px;
+  padding: 6px 12px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface);
-  white-space: nowrap;
+  font-size: 15px;
+  line-height: 1.3;
+  text-align: left;
+  overflow-wrap: anywhere;
   cursor: pointer;
 }
 .cam::before {
@@ -324,7 +319,9 @@ a { text-underline-offset: 3px; }
 /* 교통상황 */
 .traffic { display: flex; flex-direction: column; gap: 8px; }
 .traffic p { margin: 0; }
-.traffic:has(.routes) {
+.traffic.is-loading { min-height: 420px; }
+.traffic.is-loading.is-compact { min-height: 150px; }
+.traffic:has(.routes), .traffic.is-loading {
   padding: 14px 16px;
   border: 1px solid var(--line);
   border-radius: 16px;
@@ -346,7 +343,6 @@ a { text-underline-offset: 3px; }
 }
 /* 내 출발지 한 줄 */
 .mine { position: relative; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px; }
-.mine:focus { outline: none; }
 .mine-from { color: var(--muted); font-size: 14px; }
 .mine-time { font-variant-numeric: tabular-nums; }
 .mine-time strong { font-size: 26px; line-height: 1.2; letter-spacing: -0.01em; }
@@ -427,7 +423,7 @@ a { text-underline-offset: 3px; }
 
 @media (min-width: 600px) {
   .stage { margin: 0; border-radius: 16px; }
-  .cams { flex-wrap: wrap; margin: 0; padding: 0; overflow: visible; }
+  .cams { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (orientation: landscape) and (max-height: 500px) {

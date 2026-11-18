@@ -212,7 +212,7 @@ function renderList() {
   );
   mount(
     h('header', { class: 'top' },
-      h('h1', { class: 'brand' }, '스키장 웹캠',
+      h('h1', { class: 'brand', tabindex: '-1' }, '스키장 웹캠',
         h('img', { class: 'app-icon', src: ICON_URL, alt: '', width: '144', height: '144' })),
       h('span', { class: 'top-actions' }, shareButton(null)),
     ),
@@ -295,12 +295,14 @@ function trafficSection(resort) {
       analytics.track('set_origin', { origin });
       draw(data);
       section.querySelector('.mine')?.focus();
+      toast(`${origin}을(를) 내 출발지로 기억했습니다`);
     };
     const list = h('ul', { class: 'routes' }, ...others.map((route) =>
       h('li', {},
-        h('button', { class: 'route', type: 'button', onclick: pick(route), 'aria-label': `${route.from} 출발을 내 출발지로` },
+        h('button', { class: 'route', type: 'button', onclick: pick(route) },
           h('span', { class: 'route-name' }, route.from),
-          h('span', { class: 'route-time' }, ...figures(route))))));
+          h('span', { class: 'route-time' }, ...figures(route)),
+          h('span', { class: 'sr-only' }, ', 내 출발지로 지정')))));
     section.replaceChildren(
       h('div', { class: 'traffic-head' },
         h('h2', { class: 'traffic-title' }, '지금 차로 가면'),
@@ -310,15 +312,18 @@ function trafficSection(resort) {
             h('span', { class: 'mine-from' }, `${mine.from}에서`),
             h('span', { class: 'mine-time' }, ...figures(mine)))
         : h('p', { class: 'muted small' }, '출발지를 누르면 다음부터 맨 위에 보여 줍니다.'),
-      mine ? h('details', { class: 'more' }, h('summary', {}, '다른 출발지'), list) : list,
+      mine ? h('details', { class: 'more' }, h('summary', {}, '출발지 바꾸기'), list) : list,
       h('p', { class: 'muted small' }, '시청 출발 기준 예상 시간 · 5분마다 갱신 · 제공 카카오모빌리티'),
     );
   }
 
   async function load() {
+    // 불러온 뒤의 크기만큼 자리를 미리 잡아 아래 내용이 밀리지 않게 한다.
+    section.className = `traffic is-loading${origin ? ' is-compact' : ''}`;
     section.replaceChildren(h('p', { class: 'muted' }, '교통상황을 불러오는 중…'));
     const data = await loadTraffic(resort.id);
     if (!section.isConnected) return; // 그 사이 다른 화면으로 이동했다
+    section.className = 'traffic';
     if (!data) {
       section.replaceChildren(h('p', { class: 'muted' }, '교통상황을 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요.'), retry());
       return;
@@ -376,7 +381,6 @@ function directStage(resort, firstCam = 0) {
       const on = active && cam === current;
       buttons[i].classList.toggle('is-on', on);
       buttons[i].setAttribute('aria-pressed', String(on));
-      if (on) buttons[i].scrollIntoView({ block: 'nearest', inline: 'nearest' });
     });
   }
 
@@ -431,7 +435,7 @@ function renderDetail(resort, firstCam) {
   mount(
     h('header', { class: 'top' },
       h('a', { class: 'back', href: '#/', 'aria-label': '목록으로', html: ICONS.back }),
-      h('h1', {}, resort.name),
+      h('h1', { tabindex: '-1' }, resort.name),
       h('span', { class: 'top-actions' }, shareButton(resort), fav),
     ),
     h('main', { class: 'detail' }, ...stage, weatherSlot, trafficSection(resort)),
@@ -488,6 +492,8 @@ function redrawWeather() {
 
 window.addEventListener('hashchange', () => {
   render();
+  // 화면이 바뀌면 제목으로 포커스를 옮겨, 키보드·스크린리더가 새 화면 처음부터 읽게 한다.
+  app.querySelector('h1')?.focus({ preventScroll: true });
   loadWeather();
 });
 loadWeather(); // 화면 그리기에서 오류가 나더라도 날씨는 불러오도록 먼저 시작한다
