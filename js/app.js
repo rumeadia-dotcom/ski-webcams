@@ -1,6 +1,6 @@
 import { RESORTS, officialUrlFor } from './data.js';
 import { loadFavorites, toggleFavorite, sortResorts } from './favorites.js';
-import { getWeather, lastWeatherError, weatherNote, amountLabel } from './weather.js';
+import { getWeather, lastWeatherError, weatherNote, amountLabel, boardWeather } from './weather.js';
 import { detectEnv } from './browser.js';
 import { createPlayer } from './player.js';
 import { parseRoute } from './route.js';
@@ -117,6 +117,23 @@ function officialLink(resort, label, cls) {
   }, label, icon('external', 'icon-sm'));
 }
 
+// 지금 눈이 오는 곳에만 붙이는 눈 내리는 표현(.snowfall). 화면 밖이거나 탭이 가려지면 멈춘다.
+const snowWatcher = typeof IntersectionObserver === 'function'
+  ? new IntersectionObserver((entries) => {
+      for (const entry of entries) entry.target.classList.toggle('is-paused', !entry.isIntersecting);
+    })
+  : null;
+function watchSnow() {
+  snowWatcher?.disconnect();
+  for (const el of document.querySelectorAll('.snowfall')) snowWatcher?.observe(el);
+}
+
+// 목록 화면 제목 아래의 산 능선. 장식이라 읽기 도구에는 숨긴다.
+const RIDGE = '<svg viewBox="0 0 360 44" preserveAspectRatio="none" aria-hidden="true" focusable="false">'
+  + '<path class="ridge-far" d="M0 44V30l34-12 22 9 40-21 30 16 26-10 44 20 36-18 30 12 28-9 34 13 36-8v22z"/>'
+  + '<path class="ridge-near" d="M0 44V36l46-13 30 10 52-17 38 14 44-9 50 15 44-11 56 9v10z"/>'
+  + '</svg>';
+
 // ---------- 공통 영역 ----------
 
 function favButton(resort, onChange) {
@@ -199,7 +216,7 @@ function renderList() {
   document.title = '스키장 웹캠';
   const favCount = RESORTS.filter((r) => state.favorites.includes(r.id)).length;
   const rows = sortResorts(RESORTS, state.favorites).map((resort, i) =>
-    h('li', { class: `row${favCount > 0 && i === favCount ? ' is-rest-start' : ''}` },
+    h('li', { class: `row${favCount > 0 && i === favCount ? ' is-rest-start' : ''}${state.weather?.[resort.id]?.kind === 'snow' ? ' snowfall' : ''}` },
       favButton(resort, renderList),
       h('a', { class: 'row-link', href: `#/resort/${resort.id}` },
         h('span', { class: 'row-text' },
@@ -216,10 +233,12 @@ function renderList() {
         h('img', { class: 'app-icon', src: ICON_URL, alt: '', width: '144', height: '144' })),
       h('span', { class: 'top-actions' }, shareButton(null)),
     ),
+    h('div', { class: 'ridge', html: RIDGE }),
     state.weather === null ? weatherFailure('notice') : null,
     h('main', {}, h('ul', { class: 'list' }, ...rows)),
     footer(),
   );
+  watchSnow();
 }
 
 // ---------- 상세 화면 ----------
@@ -235,6 +254,7 @@ function weatherSection(resort) {
     section.append(weatherFailure('muted'));
     return section;
   }
+  if (w.kind === 'snow') section.classList.add('snowfall');
   const todayIndex = w.days.findIndex((day) => day.isToday);
   const days = h('ol', { class: 'days', tabindex: '0', 'aria-label': '일별 날씨, 좌우로 스크롤' }, ...w.days.map((day) =>
     h('li', { class: `day${day.isToday ? ' is-today' : ''}` },
@@ -272,6 +292,31 @@ function weatherSection(resort) {
 
 const LEVEL_LABEL = { smooth: '원활', slow: '서행', jam: '정체' };
 
+// 전광판 한 줄: 영상 바로 아래에서 지금 날씨와 내 출발지 소요 시간을 한눈에 보여 준다.
+// 조각을 누르면 해당 구역으로 내려간다. 교통은 출발지를 고른 사람에게만 나온다.
+const board = { el: null, resort: null, mine: null };
+function drawBoard() {
+  if (!board.el?.isConnected) return;
+  const jump = (selector) => () => document.querySelector(selector)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const weather = boardWeather(state.weather?.[board.resort.id], KIND_LABEL);
+  const parts = [];
+  if (weather) {
+    parts.push(h('button', { class: 'board-part', type: 'button', onclick: jump('.weather') },
+      h('span', { class: 'sr-only' }, '날씨 '), weather.join(' · ')));
+  } else if (state.weather === undefined) {
+    parts.push(h('span', { class: 'board-part is-wait' }, '날씨 확인 중'));
+  }
+  if (board.mine && board.mine.minutes !== null) {
+    parts.push(h('button', { class: 'board-part', type: 'button', onclick: jump('.traffic') },
+      `${board.mine.from}에서 ${formatDuration(board.mine.minutes)}`,
+      LEVEL_LABEL[board.mine.level]
+        ? h('span', { class: `level level-${board.mine.level}` }, h('span', { class: 'sr-only' }, ', '), LEVEL_LABEL[board.mine.level])
+        : null));
+  }
+  board.el.hidden = parts.length === 0;
+  board.el.replaceChildren(...parts);
+}
+
 // 교통상황: 스키장 화면에 들어오면 바로 불러온다. 서버가 5분 저장한 결과를 준다.
 // 출발지를 한 번 누르면 기억해서, 다음부터는 그 도시를 맨 위에 크게 보여 주고 나머지는 접는다.
 function trafficSection(resort) {
@@ -289,6 +334,8 @@ function trafficSection(resort) {
 
   function draw(data) {
     const { mine, others } = arrangeRoutes(data.routes, origin);
+    board.mine = mine;
+    drawBoard();
     const pick = (route) => () => {
       origin = route.from;
       saveOrigin(storage, origin);
@@ -431,6 +478,9 @@ function renderDetail(resort, firstCam) {
   const drawFav = () => fav.replaceChildren(favButton(resort, drawFav));
   drawFav();
   const weatherSlot = h('div', { id: 'weather-slot' }, weatherSection(resort));
+  board.resort = resort;
+  board.mine = null;
+  board.el = h('div', { class: `board${resort.mode === 'direct' ? ' is-attached' : ''}`, role: 'group', 'aria-label': '지금 상황 요약' });
 
   mount(
     h('header', { class: 'top' },
@@ -438,9 +488,11 @@ function renderDetail(resort, firstCam) {
       h('h1', { tabindex: '-1' }, resort.name),
       h('span', { class: 'top-actions' }, shareButton(resort), fav),
     ),
-    h('main', { class: 'detail' }, ...stage, weatherSlot, trafficSection(resort)),
+    h('main', { class: 'detail' }, ...(resort.mode === 'direct' ? [stage[0], board.el, ...stage.slice(1)] : [board.el, ...stage]), weatherSlot, trafficSection(resort)),
     footer(),
   );
+  drawBoard();
+  watchSnow();
   // 스키장에 들어오면 첫 번째 웹캠을 바로 재생한다. 가려진 탭에서는 데이터를 쓰지 않도록 건너뛴다.
   if (!document.hidden) {
     try {
@@ -485,6 +537,8 @@ function loadWeather() {
 function redrawWeather() {
   if (route.view === 'detail') {
     document.getElementById('weather-slot')?.replaceChildren(weatherSection(route.resort));
+    drawBoard();
+    watchSnow();
   } else {
     renderList();
   }

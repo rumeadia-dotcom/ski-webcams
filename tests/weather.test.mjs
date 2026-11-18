@@ -214,3 +214,13 @@ test('일별 강수·적설 표기: 좁은 칸에 맞게 10 이상은 정수로'
   assert.equal(amountLabel(12.5, 'cm'), '13cm');
   assert.equal(amountLabel(0.04, 'cm'), '0cm');
 });
+
+test('전광판 한 줄: 지금 날씨와 기온, 눈 소식이 있으면 덧붙인다', async () => {
+  const { boardWeather } = await import('../js/weather.js');
+  const days = (today, tomorrow) => [{ snow: today, isToday: true }, { snow: tomorrow, isToday: false }];
+  assert.deepEqual(boardWeather({ kind: 'snow', temp: -4.2, days: days(2, 0) }, { snow: '눈', clear: '맑음' }), ['지금 눈', '-4°']);
+  assert.deepEqual(boardWeather({ kind: 'clear', temp: 2.4, days: days(0, 6) }, { clear: '맑음' }), ['맑음', '2°', '내일 눈 6cm']);
+  assert.deepEqual(boardWeather({ kind: 'clear', temp: 2.4, days: days(0, 0) }, { clear: '맑음' }), ['맑음', '2°']);
+  assert.deepEqual(boardWeather({ kind: 'rain', temp: 3, days: days(0, 0) }, { rain: '비' }), ['지금 비', '3°']);
+  assert.equal(boardWeather(undefined, {}), null);
+});

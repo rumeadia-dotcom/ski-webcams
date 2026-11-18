@@ -69,6 +69,16 @@ export function weatherNote(w) {
   return null;
 }
 
+// 스키장 화면 영상 아래 전광판 한 줄에 넣는 날씨 조각들.
+// 지금 내리는 눈·비는 날씨 이름 자리에 쓰고, 오늘·내일 눈 예보는 뒤에 덧붙인다.
+export function boardWeather(w, labels) {
+  if (!w) return null;
+  const note = weatherNote(w);
+  const degree = typeof w.temp === 'number' ? `${Math.round(w.temp)}°` : '–';
+  if (note?.text.startsWith('지금')) return [note.text, degree];
+  return [labels[w.kind] ?? '', degree, ...(note ? [note.text] : [])];
+}
+
 // 좌표가 여러 개면 배열, 하나면 객체로 응답이 온다.
 export function parseWeather(json, resorts) {
   const list = Array.isArray(json) ? json : [json];
