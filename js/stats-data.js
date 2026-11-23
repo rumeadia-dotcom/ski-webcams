@@ -226,3 +226,20 @@ export function parseRealtime(report) {
   const row = rowsOf(report)[0];
   return row ? num(row) : 0;
 }
+
+// 로그인 토큰을 탭에 잠시 보관할 때 쓰는 글. 만료 시각을 함께 적어, 지난 토큰은 꺼내지 않는다.
+const TOKEN_MARGIN_MS = 60000; // 만료 1분 전부터는 쓰지 않는다
+
+export function packToken(token, expiresInSeconds, now = Date.now()) {
+  return JSON.stringify({ token, expiresAt: now + Number(expiresInSeconds || 0) * 1000 });
+}
+
+export function unpackToken(text, now = Date.now()) {
+  try {
+    const saved = JSON.parse(text);
+    if (typeof saved?.token !== 'string' || !saved.token) return null;
+    return Number(saved.expiresAt) - TOKEN_MARGIN_MS > now ? saved.token : null;
+  } catch {
+    return null;
+  }
+}

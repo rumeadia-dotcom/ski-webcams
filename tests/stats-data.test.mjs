@@ -158,3 +158,14 @@ test('요일별: 월요일부터 일요일 순서, 0 은 일요일', () => {
   assert.deepEqual(days.map((d) => d.sessions), [2, 0, 0, 0, 0, 30, 7]);
   assert.equal(parseWeekdays({}).length, 7);
 });
+
+test('로그인 토큰 보관: 만료 전에만 꺼낸다', async () => {
+  const { packToken, unpackToken } = await import('../js/stats-data.js');
+  const now = 1_000_000;
+  const saved = packToken('abc', 3600, now);
+  assert.equal(unpackToken(saved, now + 10 * 60000), 'abc');
+  assert.equal(unpackToken(saved, now + 3600 * 1000 - 30000), null); // 만료 1분 전부터는 쓰지 않는다
+  assert.equal(unpackToken(saved, now + 3600 * 1000 + 1), null);
+  assert.equal(unpackToken(packToken('abc', undefined, now), now), null);
+  for (const bad of [null, '', 'oops', '{}', '{"token":""}', '{"token":5,"expiresAt":9e15}']) assert.equal(unpackToken(bad, now), null);
+});

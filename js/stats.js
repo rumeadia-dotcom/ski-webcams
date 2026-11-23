@@ -4,7 +4,7 @@
 import { RESORTS } from './data.js';
 import {
   RANGES, REALTIME_REQUEST, buildBatchRequest, buildTimeRequest,
-  flagCameras, offlineRate, parseChannels, parseDashboard, parseHours, parseRealtime, parseWeekdays, todayInSeoul,
+  flagCameras, offlineRate, parseChannels, parseDashboard, parseHours, parseRealtime, parseWeekdays, todayInSeoul, packToken, unpackToken,
 } from './stats-data.js';
 
 const CLIENT_ID = '280201564860-7n2jhc6vjc1fe7sleqq2ojcgqe0bccib.apps.googleusercontent.com';
@@ -21,6 +21,31 @@ const state = {
   loading: false, error: null, data: null, channels: [], hours: [], weekdays: [], realtime: 0, loadedAt: null,
 };
 let tokenClient = null;
+
+// 로그인 토큰은 이 탭에만 보관한다(sessionStorage). 새로고침해도 유지되고 탭을 닫으면 사라진다.
+// 구글 토큰은 1시간짜리라, 그 뒤에는 다시 로그인해야 한다.
+const TOKEN_KEY = 'stats-token';
+function rememberToken(token, expiresIn) {
+  try {
+    sessionStorage.setItem(TOKEN_KEY, packToken(token, expiresIn));
+  } catch {
+    // 저장이 막힌 브라우저에서는 지금처럼 새로고침 때 다시 로그인한다.
+  }
+}
+function forgetToken() {
+  try {
+    sessionStorage.removeItem(TOKEN_KEY);
+  } catch {
+    // 무시한다.
+  }
+}
+function recallToken() {
+  try {
+    return unpackToken(sessionStorage.getItem(TOKEN_KEY));
+  } catch {
+    return null;
+  }
+}
 let latest = 0; // 가장 최근 요청 번호. 그보다 앞선 요청의 결과는 화면에 반영하지 않는다.
 
 function h(tag, attrs = {}, ...children) {
@@ -73,7 +98,8 @@ async function login() {
         render();
         return;
       }
-      state.token = response.access_token; // 메모리에만 둔다. 새로고침하면 다시 로그인한다.
+      state.token = response.access_token;
+      rememberToken(response.access_token, response.expires_in);
       load();
     },
     error_callback: () => {
@@ -127,7 +153,10 @@ async function load() {
     announce(`${RANGES[range].label} 통계를 불러왔습니다.`);
   } catch (error) {
     if (mine !== latest) return;
-    if (error.message === 'expired' || error.message === 'forbidden') state.token = null;
+    if (error.message === 'expired' || error.message === 'forbidden') {
+      state.token = null;
+      forgetToken();
+    }
     state.error = ERROR_TEXT[error.message] ?? '통계를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.';
     console.warn('통계 조회 실패:', error.message);
   } finally {
@@ -418,4 +447,7 @@ function render() {
   if (focusKey) root.querySelector(`[data-key="${focusKey}"]`)?.focus();
 }
 
-render();
+// 이 탭에서 로그인한 적이 있고 아직 만료 전이면 바로 불러온다.
+state.token = recallToken();
+if (state.token) load();
+else render();
