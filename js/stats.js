@@ -3,8 +3,8 @@
 // 애널리틱스 권한이 없는 계정으로 로그인하면 구글이 조회를 거부한다.
 import { RESORTS } from './data.js';
 import {
-  RANGES, REALTIME_REQUEST, buildBatchRequest, buildChannelRequest,
-  flagCameras, offlineRate, parseChannels, parseDashboard, parseRealtime, todayInSeoul,
+  RANGES, REALTIME_REQUEST, buildBatchRequest, buildTimeRequest,
+  flagCameras, offlineRate, parseChannels, parseDashboard, parseHours, parseRealtime, parseWeekdays, todayInSeoul,
 } from './stats-data.js';
 
 const CLIENT_ID = '280201564860-7n2jhc6vjc1fe7sleqq2ojcgqe0bccib.apps.googleusercontent.com';
@@ -18,7 +18,7 @@ const state = {
   token: null,
   range: RANGES[initialRange] ? initialRange : '7d', // 고른 기간
   loadedRange: null, // 화면의 숫자가 실제로 속한 기간. 불러오는 동안에는 range 와 다를 수 있다.
-  loading: false, error: null, data: null, channels: [], realtime: 0, loadedAt: null,
+  loading: false, error: null, data: null, channels: [], hours: [], weekdays: [], realtime: 0, loadedAt: null,
 };
 let tokenClient = null;
 let latest = 0; // 가장 최근 요청 번호. 그보다 앞선 요청의 결과는 화면에 반영하지 않는다.
@@ -111,15 +111,17 @@ async function load() {
   render();
   announce('통계를 불러오는 중입니다.');
   try {
-    const [batch, channels, realtime] = await Promise.all([
+    const [batch, time, realtime] = await Promise.all([
       call('batchRunReports', buildBatchRequest(range)),
-      call('runReport', buildChannelRequest(range)),
+      call('batchRunReports', buildTimeRequest(range)),
       call('runRealtimeReport', REALTIME_REQUEST),
     ]);
     if (mine !== latest) return; // 그 사이 다시 요청했으면 버린다
     state.data = parseDashboard(batch, RESORTS, { days: RANGES[range].days, today: todayInSeoul() });
     state.loadedRange = range;
-    state.channels = parseChannels(channels);
+    state.channels = parseChannels(time.reports?.[0]);
+    state.hours = parseHours(time.reports?.[1]);
+    state.weekdays = parseWeekdays(time.reports?.[2]);
     state.realtime = parseRealtime(realtime);
     state.loadedAt = new Date();
     announce(`${RANGES[range].label} 통계를 불러왔습니다.`);
@@ -220,6 +222,62 @@ function dailyChart(daily) {
   );
 }
 
+// 시간대·요일 막대: 날짜별 방문자와 같은 모양. 값이 적힌 막대(showValues)가 아니면 누르거나 올려서 값을 본다.
+function barChart(points, { name, peak, tip, axis, showValues, tableHead }) {
+  if (points.every((p) => p.value === 0)) return empty('이 기간에는 방문 기록이 없습니다.');
+  const max = Math.max(1, ...points.map((p) => p.value));
+  const top = points.reduce((best, p) => (p.value > best.value ? p : best), points[0]);
+  const move = (event) => {
+    const step = { ArrowLeft: -1, ArrowRight: 1 }[event.key];
+    if (!step) return;
+    const cols = [...event.currentTarget.children];
+    const next = cols[cols.indexOf(document.activeElement) + step];
+    if (!next) return;
+    event.preventDefault();
+    for (const col of cols) col.tabIndex = col === next ? 0 : -1;
+    next.focus();
+  };
+  return h('div', { class: 'daily' },
+    h('p', { class: 'daily-max', 'aria-hidden': 'true' }, peak(top)),
+    h('ul', { class: `daily-plot${showValues ? ' has-values' : ''}`, 'aria-label': `${name}. 좌우 화살표로 옮깁니다.`, onkeydown: move },
+      ...points.map((p, i) => {
+        const height = (p.value / max) * 100;
+        return h('li', { class: 'daily-col', tabindex: i === points.indexOf(top) ? '0' : '-1', 'data-tip': tip(p) },
+          h('span', { class: 'sr-only' }, tip(p)),
+          showValues ? h('span', { class: 'daily-num', 'aria-hidden': 'true', style: `bottom:${height}%` }, fmt(p.value)) : null,
+          p.value > 0 ? h('span', { class: 'daily-bar', style: `height:${height}%` }) : null);
+      })),
+    h('div', { class: 'daily-axis', 'aria-hidden': 'true' }, ...points.map((p, i) => h('span', {}, axis(p, i)))),
+    h('details', { class: 'table-view' },
+      h('summary', {}, '표로 보기'),
+      h('table', { 'aria-label': name },
+        h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, tableHead), h('th', { scope: 'col', class: 'num' }, '방문'))),
+        h('tbody', {}, ...points.map((p) => h('tr', {}, h('th', { scope: 'row' }, p.label), h('td', { class: 'num' }, `${fmt(p.value)}회`)))))),
+  );
+}
+
+function hourChart(hours) {
+  return barChart(hours.map((x) => ({ label: `${x.hour}시`, value: x.sessions, hour: x.hour })), {
+    name: '시간대별 방문 횟수',
+    peak: (p) => `가장 많은 시간 ${p.label} · ${fmt(p.value)}회`,
+    tip: (p) => `${p.label} · ${fmt(p.value)}회`,
+    axis: (p) => (p.hour % 6 === 0 ? String(p.hour) : ''),
+    showValues: false,
+    tableHead: '시간',
+  });
+}
+
+function weekdayChart(weekdays) {
+  return barChart(weekdays.map((x) => ({ label: `${x.label}요일`, short: x.label, value: x.sessions })), {
+    name: '요일별 방문 횟수',
+    peak: (p) => `가장 많은 요일 ${p.label} · ${fmt(p.value)}회`,
+    tip: (p) => `${p.label} · ${fmt(p.value)}회`,
+    axis: (p) => p.short,
+    showValues: true,
+    tableHead: '요일',
+  });
+}
+
 // 순위 막대: 이름, 가로 막대, 값. 값 칸의 폭이 같아서 모든 행의 막대가 같은 길이를 기준으로 한다.
 function rankRows(items, { valueOf, labelOf, unit, extra, wideExtra = false }) {
   const max = Math.max(1, ...items.map(valueOf));
@@ -271,6 +329,12 @@ function dashboard() {
     ),
     flaggedCard(data.cameras),
     state.loadedRange === 'today' ? null : card('날짜별 방문자', null, dailyChart(data.daily)),
+    // 요일별은 여러 주가 쌓여야 뜻이 있어 최근 28일에서만 보여 준다.
+    state.loadedRange === '28d'
+      ? h('div', { class: 'pair' },
+        card('시간대별 방문', '하루 중 몇 시에 들어오는지입니다. 한국 시간 기준입니다.', hourChart(state.hours)),
+        card('요일별 방문', '무슨 요일에 많이 들어오는지입니다. 최근 28일을 요일별로 더한 값입니다.', weekdayChart(state.weekdays)))
+      : card('시간대별 방문', '하루 중 몇 시에 들어오는지입니다. 한국 시간 기준입니다.', hourChart(state.hours)),
     card('스키장별 조회', '많이 본 스키장 순서입니다. 작은 글씨는 공식 페이지로 이동한 횟수와 즐겨찾기에 추가한 횟수입니다.',
       data.resorts.length
         ? rankRows(data.resorts, {

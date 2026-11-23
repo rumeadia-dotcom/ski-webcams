@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { RANGES, buildBatchRequest, buildChannelRequest, parseDashboard, parseChannels, parseRealtime } from '../js/stats-data.js';
+import { RANGES, buildBatchRequest, buildChannelRequest, buildTimeRequest, parseDashboard, parseChannels, parseHours, parseWeekdays, parseRealtime } from '../js/stats-data.js';
 
 const resorts = [
   { id: 'yongpyong', name: '모나용평' },
@@ -128,4 +128,28 @@ test('확인이 필요한 카메라는 송출 없음 비율이 높은 순으로 
   assert.equal(offlineRate({ plays: 0, offline: 0 }), 0);
   assert.deepEqual(flagCameras(cameras).map((c) => c.camera), ['다', '나', '라']);
   assert.deepEqual(flagCameras(cameras, { limit: 1 }).map((c) => c.camera), ['다']);
+});
+
+test('시간대·요일 요청은 유입 경로와 한 묶음으로 보낸다', () => {
+  const { requests } = buildTimeRequest('28d');
+  assert.equal(requests.length, 3);
+  assert.deepEqual(requests[0], buildChannelRequest('28d'));
+  assert.deepEqual(requests.map((r) => r.dimensions[0].name), ['sessionDefaultChannelGroup', 'hour', 'dayOfWeek']);
+  assert.ok(requests.every((r) => r.dateRanges[0] === RANGES['28d'].dateRange));
+});
+
+test('시간대별: 24칸을 채우고 없는 시간은 0', () => {
+  const hours = parseHours({ rows: [row(['20'], [12]), row(['08'], [5]), row(['(other)'], [9]), row(['24'], [1])] });
+  assert.equal(hours.length, 24);
+  assert.deepEqual(hours[8], { hour: 8, sessions: 5 });
+  assert.deepEqual(hours[20], { hour: 20, sessions: 12 });
+  assert.equal(hours.reduce((sum, x) => sum + x.sessions, 0), 17);
+  assert.equal(parseHours({}).every((x) => x.sessions === 0), true);
+});
+
+test('요일별: 월요일부터 일요일 순서, 0 은 일요일', () => {
+  const days = parseWeekdays({ rows: [row(['0'], [7]), row(['6'], [30]), row(['1'], [2])] });
+  assert.deepEqual(days.map((d) => d.label), ['월', '화', '수', '목', '금', '토', '일']);
+  assert.deepEqual(days.map((d) => d.sessions), [2, 0, 0, 0, 0, 30, 7]);
+  assert.equal(parseWeekdays({}).length, 7);
 });

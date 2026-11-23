@@ -49,6 +49,18 @@ export function buildChannelRequest(rangeKey) {
   };
 }
 
+// 유입 경로, 시간대별, 요일별 방문을 한 번에 요청한다(첫 묶음이 5개로 가득 차서 따로 보낸다).
+export function buildTimeRequest(rangeKey) {
+  const dateRanges = [RANGES[rangeKey].dateRange];
+  return {
+    requests: [
+      buildChannelRequest(rangeKey),
+      { dateRanges, dimensions: dims('hour'), metrics: metrics('sessions') },
+      { dateRanges, dimensions: dims('dayOfWeek'), metrics: metrics('sessions') },
+    ],
+  };
+}
+
 export const REALTIME_REQUEST = { metrics: metrics('activeUsers') };
 
 const rowsOf = (report) => report?.rows ?? [];
@@ -181,6 +193,24 @@ export function parseChannels(report) {
   return [...channels.values()]
     .map((c) => ({ ...c, sources: c.sources.sort((a, b) => b.sessions - a.sessions) }))
     .sort((a, b) => b.sessions - a.sessions);
+}
+
+// 0시부터 23시까지 24칸. 기록이 없는 시간은 0으로 채운다.
+export function parseHours(report) {
+  const hours = Array.from({ length: 24 }, (_, hour) => ({ hour, sessions: 0 }));
+  for (const row of rowsOf(report)) {
+    const hour = Number(dim(row, 0));
+    if (Number.isInteger(hour) && hours[hour]) hours[hour].sessions += num(row);
+  }
+  return hours;
+}
+
+// 월요일부터 일요일까지 7칸. 애널리틱스의 요일 번호는 0 이 일요일이다.
+const WEEKDAYS = [[1, '월'], [2, '화'], [3, '수'], [4, '목'], [5, '금'], [6, '토'], [0, '일']];
+export function parseWeekdays(report) {
+  const counts = new Map();
+  for (const row of rowsOf(report)) counts.set(Number(dim(row, 0)), (counts.get(Number(dim(row, 0))) ?? 0) + num(row));
+  return WEEKDAYS.map(([number, label]) => ({ label, sessions: counts.get(number) ?? 0 }));
 }
 
 export function parseRealtime(report) {
