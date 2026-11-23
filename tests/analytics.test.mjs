@@ -38,10 +38,12 @@ test('운영 주소에서는 측정 스크립트를 한 번 불러오고 설정�
 
 test('공유 표식이 붙은 주소로 들어오면 출처를 공유로 적는다', () => {
   const shared = fakeBrowser();
-  createAnalytics({ win: shared.win, doc: shared.doc, host: 'ski-webcams.vercel.app', search: '?s=1' });
-  assert.deepEqual(events(shared.win)[1], ['config', MEASUREMENT_ID, { campaign_source: 'share', campaign_medium: 'social' }]);
+  createAnalytics({ win: shared.win, doc: shared.doc, host: 'ski-webcams.vercel.app', href: 'https://ski-webcams.vercel.app/?s=1#/resort/jisan' });
+  assert.deepEqual(events(shared.win)[1], ['config', MEASUREMENT_ID, {
+    page_location: 'https://ski-webcams.vercel.app/?s=1&utm_source=share&utm_medium=social#/resort/jisan',
+  }]);
   const plain = fakeBrowser();
-  createAnalytics({ win: plain.win, doc: plain.doc, host: 'ski-webcams.vercel.app', search: '?cam=3' });
+  createAnalytics({ win: plain.win, doc: plain.doc, host: 'ski-webcams.vercel.app', href: 'https://ski-webcams.vercel.app/#/resort/jisan' });
   assert.deepEqual(events(plain.win)[1], ['config', MEASUREMENT_ID]);
 });
 

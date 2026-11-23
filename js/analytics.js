@@ -7,12 +7,26 @@ export const MEASUREMENT_ID = 'G-RXMW94T77H';
 // 운영 주소에서만 수집한다. 로컬 개발과 미리보기 배포가 통계에 섞이지 않게 한다.
 const PRODUCTION_HOST = 'ski-webcams.vercel.app';
 
+// 공유 표식이 있는 주소면 utm 을 붙인 주소를, 아니면 null 을 돌려준다.
+export function sharedLocation(href) {
+  let url;
+  try {
+    url = new URL(href);
+  } catch {
+    return null;
+  }
+  if (!isSharedVisit(url.search)) return null;
+  url.searchParams.set('utm_source', 'share');
+  url.searchParams.set('utm_medium', 'social');
+  return url.href;
+}
+
 // track(name, params) 하나만 가진 객체를 돌려준다. 통계는 어떤 경우에도 사이트 동작을 막지 않는다.
 export function createAnalytics({
   win = globalThis.window,
   doc = globalThis.document,
   host = globalThis.location?.hostname,
-  search = globalThis.location?.search,
+  href = globalThis.location?.href,
 } = {}) {
   if (host !== PRODUCTION_HOST) return { track() {} };
 
@@ -24,8 +38,10 @@ export function createAnalytics({
     };
     win.gtag('js', new Date());
     // 공유 버튼으로 만든 주소(s=1)로 들어온 방문은 출처를 "share", 매체를 "social" 로 적는다.
-    if (isSharedVisit(search)) {
-      win.gtag('config', MEASUREMENT_ID, { campaign_source: 'share', campaign_medium: 'social' });
+    // 애널리틱스는 페이지 주소의 utm 값으로 출처를 정하므로, 보고하는 주소에만 utm 을 붙인다(주소창은 그대로).
+    const shared = sharedLocation(href);
+    if (shared) {
+      win.gtag('config', MEASUREMENT_ID, { page_location: shared });
     } else {
       win.gtag('config', MEASUREMENT_ID);
     }
