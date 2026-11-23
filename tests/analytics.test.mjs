@@ -36,14 +36,19 @@ test('운영 주소에서는 측정 스크립트를 한 번 불러오고 설정�
   assert.deepEqual(sent[1], ['config', MEASUREMENT_ID]);
 });
 
-test('공유 표식이 붙은 주소로 들어오면 출처를 공유로 적는다', () => {
+test('공유 표식이 붙은 주소로 들어오면 주소에 utm 을 붙여 출처가 공유로 잡히게 한다', () => {
   const shared = fakeBrowser();
+  const replaced = [];
+  shared.win.history = { state: { k: 1 }, replaceState: (...args) => replaced.push(args) };
   createAnalytics({ win: shared.win, doc: shared.doc, host: 'ski-webcams.vercel.app', href: 'https://ski-webcams.vercel.app/?s=1#/resort/jisan' });
-  assert.deepEqual(events(shared.win)[1], ['config', MEASUREMENT_ID, {
-    page_location: 'https://ski-webcams.vercel.app/?s=1&utm_source=share&utm_medium=social#/resort/jisan',
-  }]);
+  assert.deepEqual(replaced, [[{ k: 1 }, '', 'https://ski-webcams.vercel.app/?s=1&utm_source=share&utm_medium=social#/resort/jisan']]);
+  assert.deepEqual(events(shared.win)[1], ['config', MEASUREMENT_ID]);
+
   const plain = fakeBrowser();
-  createAnalytics({ win: plain.win, doc: plain.doc, host: 'ski-webcams.vercel.app', href: 'https://ski-webcams.vercel.app/#/resort/jisan' });
+  const untouched = [];
+  plain.win.history = { state: null, replaceState: (...args) => untouched.push(args) };
+  createAnalytics({ win: plain.win, doc: plain.doc, host: 'ski-webcams.vercel.app', href: 'https://ski-webcams.vercel.app/?cam=3#/resort/jisan' });
+  assert.deepEqual(untouched, []);
   assert.deepEqual(events(plain.win)[1], ['config', MEASUREMENT_ID]);
 });
 

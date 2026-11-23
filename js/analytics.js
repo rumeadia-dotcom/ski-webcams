@@ -38,13 +38,11 @@ export function createAnalytics({
     };
     win.gtag('js', new Date());
     // 공유 버튼으로 만든 주소(s=1)로 들어온 방문은 출처를 "share", 매체를 "social" 로 적는다.
-    // 애널리틱스는 페이지 주소의 utm 값으로 출처를 정하므로, 보고하는 주소에만 utm 을 붙인다(주소창은 그대로).
+    // 애널리틱스는 실제 페이지 주소의 utm 값으로 출처를 정한다(설정값으로 넘기는 방법은 전송되지 않는 것을 확인했다).
+    // 그래서 측정 스크립트가 주소를 읽기 전에 주소창의 주소에 utm 을 붙여 둔다. 화면은 다시 불러오지 않는다.
     const shared = sharedLocation(href);
-    if (shared) {
-      win.gtag('config', MEASUREMENT_ID, { page_location: shared });
-    } else {
-      win.gtag('config', MEASUREMENT_ID);
-    }
+    if (shared) win.history?.replaceState(win.history.state, '', shared);
+    win.gtag('config', MEASUREMENT_ID);
 
     const script = doc.createElement('script');
     script.async = true;
