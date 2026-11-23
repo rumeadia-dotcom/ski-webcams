@@ -160,3 +160,30 @@ test('교통 불러오기는 AbortSignal.timeout 이 없는 브라우저에서�
     AbortSignal.timeout = original;
   }
 });
+
+test('서버 기능: 정해진 주소가 아니면 카카오를 부르지 않고 거절한다', async () => {
+  const odd = [
+    '/api/traffic?resort=konjiam&_=123',
+    '/api/traffic?_=1&resort=konjiam',
+    '/api/traffic?resort=konjiam&',
+    '/api/traffic?resort=%6Bonjiam',
+    '/api/traffic/?resort=konjiam',
+    '/API/traffic?resort=konjiam',
+  ];
+  for (const url of odd) {
+    const calls = [];
+    const res = fakeRes();
+    await handler({ url, query: { resort: 'konjiam' } }, res, { key: 'k', fetch: okFetch(calls) });
+    assert.equal(res.code, 400, url);
+    assert.equal(calls.length, 0, url);
+    assert.equal(res.headers['Cache-Control'], 'no-store', url);
+  }
+});
+
+test('서버 기능: 정해진 주소는 그대로 처리한다', async () => {
+  const calls = [];
+  const res = fakeRes();
+  await handler({ url: '/api/traffic?resort=konjiam', query: { resort: 'konjiam' } }, res, { key: 'k', fetch: okFetch(calls) });
+  assert.equal(res.code, 200);
+  assert.equal(calls.length, 7);
+});
