@@ -3,6 +3,7 @@ import { loadFavorites, toggleFavorite, sortResorts } from './favorites.js';
 import { getWeather, lastWeatherError, weatherNote, amountLabel, boardWeather } from './weather.js';
 import { detectEnv } from './browser.js';
 import { createPlayer } from './player.js';
+import { checkCam, pickCam } from './health.js';
 import { parseRoute } from './route.js';
 import { createAnalytics } from './analytics.js';
 import { share, shareUrl } from './share.js';
@@ -438,6 +439,10 @@ function directStage(resort, firstCam = 0) {
     // 송출이 없거나 멈춘 상태에서도 어느 카메라를 고른 것인지 표시를 유지한다.
     if (current && next === 'offline') off.add(current);
     if (current && next === 'playing') off.delete(current);
+    paintButtons();
+  }
+
+  function paintButtons() {
     resort.cams.forEach((cam, i) => {
       const on = cam === current;
       buttons[i].classList.toggle('is-on', on);
@@ -445,6 +450,18 @@ function directStage(resort, firstCam = 0) {
       buttons[i].setAttribute('aria-pressed', String(on));
       buttons[i].lastChild.textContent = off.has(cam) ? ', 송출 없음' : '';
     });
+  }
+
+  // 확인해 보니 모든 카메라가 꺼져 있을 때: 재생을 기다리게 하지 않고 바로 알린다.
+  function showAllOff() {
+    overlay.replaceChildren(
+      h('p', {}, '지금은 모든 카메라의 송출이 없습니다'),
+      h('div', { class: 'overlay-actions' },
+        h('button', { class: 'btn btn-quiet', type: 'button', onclick: () => autoStart?.() }, '다시 확인'),
+        officialLink(resort, '공식 페이지에서 보기', 'btn'),
+      ),
+    );
+    overlay.hidden = false;
   }
 
   function start(cam, auto = false) {
@@ -456,7 +473,41 @@ function directStage(resort, firstCam = 0) {
 
   player = createPlayer(media, { onState, preferNative: env.os === 'ios' });
   onState('idle');
-  autoStart = () => start(resort.cams[firstCam] ?? resort.cams[0], true);
+  // 들어오면 각 카메라의 스트림이 살아 있는지 먼저 확인하고, 꺼진 카메라는 건너뛰어 재생한다.
+  // 틀려던 카메라가 살아 있으면 나머지 확인을 기다리지 않는다.
+  let checkRun = 0;
+  autoStart = async () => {
+    const mine = ++checkRun;
+    const preferred = resort.cams[firstCam] ?? resort.cams[0];
+    const states = new Map();
+    // 확인하는 사이 화면을 떠났거나, 다시 확인을 눌렀거나, 사용자가 직접 카메라를 고르면 손대지 않는다.
+    const usable = () => mine === checkRun && media.isConnected && current === null;
+    current = null;
+    onState('loading');
+    // 틀려던 카메라는 재생 시작을 붙잡고 있으므로 짧게만 기다린다. 나머지는 늦게 답하는 서버도 있어 넉넉히 기다려 표시만 한다.
+    const checks = resort.cams.map((cam) => checkCam(cam, { timeoutMs: cam === preferred ? 4000 : 12000 }).then((state) => {
+      states.set(cam, state);
+      if (mine === checkRun && media.isConnected && state === 'off') {
+        off.add(cam);
+        paintButtons();
+      }
+      return state;
+    }));
+    if ((await checks[resort.cams.indexOf(preferred)]) !== 'off') {
+      if (usable()) start(preferred, true);
+      return;
+    }
+    await Promise.all(checks);
+    if (!usable()) return;
+    const next = pickCam(resort.cams, states, preferred);
+    if (!next) {
+      showAllOff();
+      return;
+    }
+    start(next, true);
+    // 공유받은 주소가 가리킨 카메라가 꺼져 있을 때만 바뀐 것을 알린다.
+    if (firstCam > 0) toast(`${preferred.name} 카메라는 송출이 없어 ${next.name} 카메라를 보여 줍니다`);
+  };
 
   return [
     h('div', { class: 'stage' }, media, overlay),
@@ -518,11 +569,10 @@ function renderDetail(resort, firstCam) {
   watchSnow();
   // 스키장에 들어오면 첫 번째 웹캠을 바로 재생한다. 가려진 탭에서는 데이터를 쓰지 않도록 건너뛴다.
   if (!document.hidden) {
-    try {
-      autoStart?.();
-    } catch (error) {
-      console.error('자동 재생 시작 실패', error); // 재생이 안 되어도 나머지 화면은 그대로 쓴다
-    }
+    // 재생이 안 되어도 나머지 화면은 그대로 쓴다.
+    Promise.resolve()
+      .then(() => autoStart?.())
+      .catch((error) => console.error('자동 재생 시작 실패', error));
   }
 }
 

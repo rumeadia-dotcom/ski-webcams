@@ -83,13 +83,6 @@ main, .dash { display: flex; flex-direction: column; gap: var(--gap-inside); }
 .tile-value { font-size: var(--fs-figure); font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .tile-note { color: var(--muted); font-size: var(--fs-meta); }
 
-/* 확인이 필요한 카메라 */
-.flags { margin: 0; padding: 0; list-style: none; }
-.flag { position: relative; display: grid; grid-template-columns: 1fr auto; column-gap: 12px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
-.flag-name { font-weight: 600; }
-a.flag-name::after { content: ""; position: absolute; inset: 0; } /* 행 전체를 누를 수 있게 한다 */
-.flag-rate { grid-row: span 2; color: var(--sun); font-size: var(--fs-item); font-weight: 700; font-variant-numeric: tabular-nums; }
-.flag-note { color: var(--muted); font-size: var(--fs-meta); }
 
 /* 날짜별 막대 */
 .daily-max { margin: 0; color: var(--muted); font-size: var(--fs-meta); }

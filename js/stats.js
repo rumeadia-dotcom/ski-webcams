@@ -4,7 +4,7 @@
 import { RESORTS } from './data.js';
 import {
   RANGES, REALTIME_REQUEST, buildBatchRequest, buildTimeRequest,
-  flagCameras, offlineRate, parseChannels, parseDashboard, parseHours, parseRealtime, parseWeekdays, todayInSeoul, packToken, unpackToken,
+  offlineRate, parseChannels, parseDashboard, parseHours, parseRealtime, parseWeekdays, todayInSeoul, packToken, unpackToken,
 } from './stats-data.js';
 
 const CLIENT_ID = '280201564860-7n2jhc6vjc1fe7sleqq2ojcgqe0bccib.apps.googleusercontent.com';
@@ -196,22 +196,6 @@ function card(title, description, ...body) {
 
 const empty = (text = '아직 데이터가 없습니다.') => h('p', { class: 'empty' }, text);
 
-// 확인이 필요한 카메라: 주인이 이 화면에서 바로 손쓸 수 있는 유일한 정보라 요약 숫자 바로 아래에 둔다.
-function flaggedCard(cameras) {
-  const flagged = flagCameras(cameras);
-  return card('확인이 필요한 카메라',
-    '재생하려다 "송출 없음"으로 끝난 비율이 20% 이상인 카메라입니다. 야간이나 개장 전에는 정상일 수 있습니다.',
-    flagged.length
-      ? h('ul', { class: 'flags' }, ...flagged.map((c) =>
-        h('li', { class: 'flag' },
-          c.resortId
-            ? h('a', { class: 'flag-name', href: `./#/resort/${c.resortId}` }, c.camera)
-            : h('span', { class: 'flag-name' }, c.camera),
-          h('span', { class: 'flag-rate' }, h('span', { class: 'sr-only' }, '송출 없음 비율 '), `${offlineRate(c)}%`),
-          h('span', { class: 'flag-note' }, `${c.resort} · 송출 없음 ${fmt(c.offline)}회 · 재생 ${fmt(c.plays)}회`))))
-      : empty('송출 없음이 잦은 카메라가 없습니다.'));
-}
-
 // 날짜별 방문자: 세로 막대. 7일은 막대 위에 값을 적고, 28일은 막대를 누르거나 올리면 값을 보여 준다.
 function dailyChart(daily) {
   if (daily.length < 2) return null;
@@ -356,7 +340,6 @@ function dashboard() {
       tile('방문 횟수', data.kpi.sessions, rangeLabel),
       tile('화면 조회', data.kpi.views, rangeLabel),
     ),
-    flaggedCard(data.cameras),
     state.loadedRange === 'today' ? null : card('날짜별 방문자', null, dailyChart(data.daily)),
     // 요일별은 여러 주가 쌓여야 뜻이 있어 최근 28일에서만 보여 준다.
     state.loadedRange === '28d'

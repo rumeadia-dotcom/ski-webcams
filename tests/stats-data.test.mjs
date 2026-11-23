@@ -120,19 +120,11 @@ test('유입 경로와 실시간 값', () => {
   assert.equal(parseRealtime({}), 0);
 });
 
-test('확인이 필요한 카메라는 송출 없음 비율이 높은 순으로 고른다', async () => {
-  const { flagCameras, offlineRate } = await import('../js/stats-data.js');
-  const cameras = [
-    { camera: '가', plays: 90, offline: 10 }, // 10%: 기준 미만
-    { camera: '나', plays: 50, offline: 50 }, // 50%
-    { camera: '다', plays: 0, offline: 4 }, // 100%
-    { camera: '라', plays: 80, offline: 20 }, // 20%
-    { camera: '마', plays: 30, offline: 0 },
-  ];
-  assert.equal(offlineRate(cameras[1]), 50);
+test('송출 없음 비율', async () => {
+  const { offlineRate } = await import('../js/stats-data.js');
+  assert.equal(offlineRate({ plays: 50, offline: 50 }), 50);
+  assert.equal(offlineRate({ plays: 0, offline: 4 }), 100);
   assert.equal(offlineRate({ plays: 0, offline: 0 }), 0);
-  assert.deepEqual(flagCameras(cameras).map((c) => c.camera), ['다', '나', '라']);
-  assert.deepEqual(flagCameras(cameras, { limit: 1 }).map((c) => c.camera), ['다']);
 });
 
 test('시간대·요일 요청은 유입 경로와 한 묶음으로 보낸다', () => {

@@ -148,14 +148,6 @@ export function offlineRate(camera) {
   return tries > 0 ? Math.round((camera.offline / tries) * 100) : 0;
 }
 
-// 확인이 필요한 카메라: 송출 없음 비율이 minRate 이상인 것을 비율 높은 순으로 limit 개.
-export function flagCameras(cameras, { minRate = 20, limit = 5 } = {}) {
-  return cameras
-    .filter((c) => c.offline > 0 && offlineRate(c) >= minRate)
-    .sort((a, b) => offlineRate(b) - offlineRate(a) || b.offline - a.offline)
-    .slice(0, limit);
-}
-
 const CHANNEL_LABELS = {
   Direct: '직접 방문',
   'Organic Search': '검색',
