@@ -44,7 +44,7 @@ export function buildBatchRequest(rangeKey) {
 export function buildChannelRequest(rangeKey) {
   return {
     dateRanges: [RANGES[rangeKey].dateRange],
-    dimensions: dims('sessionDefaultChannelGroup'),
+    dimensions: dims('sessionDefaultChannelGroup', 'sessionSource'),
     metrics: metrics('sessions'),
   };
 }
@@ -106,7 +106,8 @@ export function parseDashboard(response, resorts, { days, today }) {
     const resort = nameOf(dim(row, 1));
     const camera = dim(row, 2) === UNSET || dim(row, 2) === '' ? '미분류' : dim(row, 2);
     const key = `${resort}\u0000${camera}`;
-    const entry = cameraMap.get(key) ?? { resort, camera, plays: 0, offline: 0 };
+    const resortId = resorts.some((r) => r.id === dim(row, 1)) ? dim(row, 1) : null;
+    const entry = cameraMap.get(key) ?? { resort, resortId, camera, plays: 0, offline: 0 };
     if (dim(row, 0) === 'play_camera') entry.plays += num(row);
     else if (dim(row, 0) === 'camera_offline') entry.offline += num(row);
     cameraMap.set(key, entry);
@@ -120,6 +121,20 @@ export function parseDashboard(response, resorts, { days, today }) {
   return { kpi, daily, resorts: resortList, cameras, devices };
 }
 
+// 재생을 시도한 횟수 중 "송출 없음"으로 끝난 비율(0~100, 정수).
+export function offlineRate(camera) {
+  const tries = camera.plays + camera.offline;
+  return tries > 0 ? Math.round((camera.offline / tries) * 100) : 0;
+}
+
+// 확인이 필요한 카메라: 송출 없음 비율이 minRate 이상인 것을 비율 높은 순으로 limit 개.
+export function flagCameras(cameras, { minRate = 20, limit = 5 } = {}) {
+  return cameras
+    .filter((c) => c.offline > 0 && offlineRate(c) >= minRate)
+    .sort((a, b) => offlineRate(b) - offlineRate(a) || b.offline - a.offline)
+    .slice(0, limit);
+}
+
 const CHANNEL_LABELS = {
   Direct: '직접 방문',
   'Organic Search': '검색',
@@ -129,9 +144,42 @@ const CHANNEL_LABELS = {
   Unassigned: '분류 안 됨',
 };
 
+// 출처 이름. 'share' 는 사이트의 공유 버튼으로 만든 주소로 들어온 방문이다.
+const SOURCE_LABELS = [
+  [/^share$/, '공유 링크'],
+  [/instagram/, '인스타그램'],
+  [/facebook|^fb\b/, '페이스북'],
+  [/^t\.co$|twitter|^x\.com$/, 'X'],
+  [/kakao/, '카카오'],
+  [/naver/, '네이버'],
+  [/daum/, '다음'],
+  [/youtube/, '유튜브'],
+  [/google/, '구글'],
+];
+const NO_SOURCE = new Set(['(direct)', '(not set)', '']);
+
+export function sourceLabel(source) {
+  return SOURCE_LABELS.find(([pattern]) => pattern.test(source))?.[1] ?? source;
+}
+
+// 유입 경로별 방문 수와, 그 안에서 어느 사이트(출처)였는지.
 export function parseChannels(report) {
-  return rowsOf(report)
-    .map((row) => ({ label: CHANNEL_LABELS[dim(row, 0)] ?? dim(row, 0), sessions: num(row) }))
+  const channels = new Map();
+  for (const row of rowsOf(report)) {
+    const label = CHANNEL_LABELS[dim(row, 0)] ?? dim(row, 0);
+    const channel = channels.get(label) ?? { label, sessions: 0, sources: [] };
+    channel.sessions += num(row);
+    const source = dim(row, 1) ?? '';
+    if (!NO_SOURCE.has(source)) {
+      const name = sourceLabel(source);
+      const found = channel.sources.find((s) => s.label === name);
+      if (found) found.sessions += num(row);
+      else channel.sources.push({ label: name, sessions: num(row) });
+    }
+    channels.set(label, channel);
+  }
+  return [...channels.values()]
+    .map((c) => ({ ...c, sources: c.sources.sort((a, b) => b.sessions - a.sessions) }))
     .sort((a, b) => b.sessions - a.sessions);
 }
 

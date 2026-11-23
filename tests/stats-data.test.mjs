@@ -74,8 +74,8 @@ test('응답을 화면용 값으로 바꾼다', () => {
     ['미분류', 1, 0, 0],
   ]);
   assert.deepEqual(d.cameras, [
-    { resort: '모나용평', camera: '옐로우 슬로프', plays: 7, offline: 0 },
-    { resort: '지산포레스트', camera: '레몬탑승장', plays: 1, offline: 4 },
+    { resort: '모나용평', resortId: 'yongpyong', camera: '옐로우 슬로프', plays: 7, offline: 0 },
+    { resort: '지산포레스트', resortId: 'jisan', camera: '레몬탑승장', plays: 1, offline: 4 },
   ]);
   assert.deepEqual(d.devices, [{ label: '모바일', users: 10 }, { label: 'PC', users: 2 }]);
 });
@@ -95,13 +95,37 @@ test('월이 바뀌는 구간도 날짜를 채운다', () => {
 });
 
 test('유입 경로와 실시간 값', () => {
-  const channels = parseChannels({ rows: [row(['Direct'], [6]), row(['Organic Social'], [3]), row(['Something New'], [1])] });
+  const channels = parseChannels({ rows: [
+    row(['Direct', '(direct)'], [6]),
+    row(['Organic Social', 'l.instagram.com'], [1]),
+    row(['Organic Social', 'share'], [3]),
+    row(['Organic Social', 'instagram.com'], [1]),
+    row(['Referral', 'some.blog.example'], [2]),
+    row(['Something New', '(not set)'], [1]),
+  ] });
   assert.deepEqual(channels, [
-    { label: '직접 방문', sessions: 6 },
-    { label: 'SNS', sessions: 3 },
-    { label: 'Something New', sessions: 1 },
+    { label: '직접 방문', sessions: 6, sources: [] },
+    { label: 'SNS', sessions: 5, sources: [{ label: '공유 링크', sessions: 3 }, { label: '인스타그램', sessions: 2 }] },
+    { label: '다른 사이트 링크', sessions: 2, sources: [{ label: 'some.blog.example', sessions: 2 }] },
+    { label: 'Something New', sessions: 1, sources: [] },
   ]);
+  assert.deepEqual(buildChannelRequest('7d').dimensions.map((d) => d.name), ['sessionDefaultChannelGroup', 'sessionSource']);
   assert.deepEqual(parseChannels({}), []);
   assert.equal(parseRealtime({ rows: [row([], [3])] }), 3);
   assert.equal(parseRealtime({}), 0);
+});
+
+test('확인이 필요한 카메라는 송출 없음 비율이 높은 순으로 고른다', async () => {
+  const { flagCameras, offlineRate } = await import('../js/stats-data.js');
+  const cameras = [
+    { camera: '가', plays: 90, offline: 10 }, // 10%: 기준 미만
+    { camera: '나', plays: 50, offline: 50 }, // 50%
+    { camera: '다', plays: 0, offline: 4 }, // 100%
+    { camera: '라', plays: 80, offline: 20 }, // 20%
+    { camera: '마', plays: 30, offline: 0 },
+  ];
+  assert.equal(offlineRate(cameras[1]), 50);
+  assert.equal(offlineRate({ plays: 0, offline: 0 }), 0);
+  assert.deepEqual(flagCameras(cameras).map((c) => c.camera), ['다', '나', '라']);
+  assert.deepEqual(flagCameras(cameras, { limit: 1 }).map((c) => c.camera), ['다']);
 });

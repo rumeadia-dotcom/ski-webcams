@@ -1,5 +1,7 @@
 // 방문 통계. Firebase 프로젝트(jhan-e7f61)의 웹 앱 'ski-webcams' 에 연결된 Google Analytics 측정 ID 로 보낸다.
 // 측정 ID 는 공개되어도 되는 값이다(브라우저로 전달되는 값). API 키는 쓰지 않는다.
+import { isSharedVisit } from './share.js';
+
 export const MEASUREMENT_ID = 'G-RXMW94T77H';
 
 // 운영 주소에서만 수집한다. 로컬 개발과 미리보기 배포가 통계에 섞이지 않게 한다.
@@ -10,6 +12,7 @@ export function createAnalytics({
   win = globalThis.window,
   doc = globalThis.document,
   host = globalThis.location?.hostname,
+  search = globalThis.location?.search,
 } = {}) {
   if (host !== PRODUCTION_HOST) return { track() {} };
 
@@ -20,7 +23,12 @@ export function createAnalytics({
       win.dataLayer.push(arguments);
     };
     win.gtag('js', new Date());
-    win.gtag('config', MEASUREMENT_ID);
+    // 공유 버튼으로 만든 주소(s=1)로 들어온 방문은 출처를 "share", 매체를 "social" 로 적는다.
+    if (isSharedVisit(search)) {
+      win.gtag('config', MEASUREMENT_ID, { campaign_source: 'share', campaign_medium: 'social' });
+    } else {
+      win.gtag('config', MEASUREMENT_ID);
+    }
 
     const script = doc.createElement('script');
     script.async = true;

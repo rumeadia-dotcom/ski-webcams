@@ -2,11 +2,19 @@
 // 배포본에서는 스키장마다 미리보기용 페이지(/r/{id})를 만들어 두고 그 주소를 공유한다.
 
 // cam 은 0부터 세는 카메라 순서. 첫 번째 카메라는 기본값이라 주소에 넣지 않는다.
+// 공유 버튼으로 만든 주소에는 s=1 을 붙인다. 이 표식으로 들어온 방문은 통계에서 "공유 링크"로 잡힌다
+// (카카오톡 같은 앱은 어디서 왔는지 알려 주지 않아, 표식이 없으면 직접 방문과 구분되지 않는다).
+export const SHARE_MARK = 's=1';
+
 export function shareUrl({ origin, pages, resortId, cam }) {
-  if (!resortId) return `${origin}/`;
+  if (!resortId) return `${origin}/?${SHARE_MARK}`;
   const number = cam > 0 ? cam + 1 : 0;
-  if (pages) return `${origin}/r/${resortId}${number ? `?cam=${number}` : ''}`;
-  return `${origin}/#/resort/${resortId}${number ? `/${number}` : ''}`;
+  if (pages) return `${origin}/r/${resortId}?${number ? `cam=${number}&` : ''}${SHARE_MARK}`;
+  return `${origin}/?${SHARE_MARK}#/resort/${resortId}${number ? `/${number}` : ''}`;
+}
+
+export function isSharedVisit(search = '') {
+  return new URLSearchParams(search).get('s') === '1';
 }
 
 const escapeHtml = (text) =>
@@ -33,8 +41,9 @@ export function sharePageHtml(resort, { siteUrl, image }) {
 <meta name="twitter:card" content="summary_large_image">
 <link rel="canonical" href="${siteUrl}/">
 <script>
-var cam = new URLSearchParams(location.search).get('cam');
-location.replace(${JSON.stringify(target)} + (/^\\d{1,3}$/.test(cam || '') ? '/' + cam : ''));
+var q = new URLSearchParams(location.search);
+var cam = q.get('cam');
+location.replace('/' + (q.get('s') === '1' ? '?s=1' : '') + ${JSON.stringify(target.slice(1))} + (/^\\d{1,3}$/.test(cam || '') ? '/' + cam : ''));
 </script>
 <noscript><meta http-equiv="refresh" content="0;url=${target}"></noscript>
 </head>
