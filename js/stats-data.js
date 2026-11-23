@@ -7,7 +7,8 @@ export const RANGES = {
   '28d': { label: '최근 28일', days: 28, dateRange: { startDate: '27daysAgo', endDate: 'today' } },
 };
 
-const RESORT_EVENTS = ['view_resort', 'open_official', 'add_favorite'];
+const RESORT_EVENTS = ['view_resort', 'open_official', 'add_favorite', 'share'];
+const SITE_SHARE = 'site'; // 목록 화면에서 사이트 전체를 공유할 때의 resort_id
 const CAMERA_EVENTS = ['play_camera', 'camera_offline'];
 const UNSET = '(not set)';
 
@@ -103,10 +104,18 @@ export function parseDashboard(response, resorts, { days, today }) {
   const daily = lastDays(days, today).map((date) => ({ date, users: usersByDate.get(date) ?? 0 }));
 
   const resortMap = new Map();
+  const shares = { total: 0, site: 0 };
   for (const row of rowsOf(resortReport)) {
+    if (dim(row, 0) === 'share') {
+      shares.total += num(row);
+      if (dim(row, 1) === SITE_SHARE) {
+        shares.site += num(row);
+        continue; // 사이트 전체 공유는 스키장 행으로 만들지 않는다
+      }
+    }
     const name = nameOf(dim(row, 1));
-    const entry = resortMap.get(name) ?? { name, views: 0, official: 0, favorites: 0 };
-    const field = { view_resort: 'views', open_official: 'official', add_favorite: 'favorites' }[dim(row, 0)];
+    const entry = resortMap.get(name) ?? { name, views: 0, official: 0, favorites: 0, shares: 0 };
+    const field = { view_resort: 'views', open_official: 'official', add_favorite: 'favorites', share: 'shares' }[dim(row, 0)];
     if (field) entry[field] += num(row);
     resortMap.set(name, entry);
   }
@@ -130,7 +139,7 @@ export function parseDashboard(response, resorts, { days, today }) {
     .map((row) => ({ label: DEVICE_LABELS[dim(row, 0)] ?? dim(row, 0), users: num(row) }))
     .sort((a, b) => b.users - a.users);
 
-  return { kpi, daily, resorts: resortList, cameras, devices };
+  return { shares, kpi, daily, resorts: resortList, cameras, devices };
 }
 
 // 재생을 시도한 횟수 중 "송출 없음"으로 끝난 비율(0~100, 정수).

@@ -29,7 +29,7 @@ test('요청은 보고서 5개이고 모두 같은 기간을 쓴다', () => {
   assert.deepEqual(dims[2], ['eventName', 'customEvent:resort_id']);
   assert.deepEqual(dims[3], ['eventName', 'customEvent:resort_id', 'customEvent:camera_name']);
   assert.deepEqual(dims[4], ['deviceCategory']);
-  assert.deepEqual(body.requests[2].dimensionFilter.filter.inListFilter.values, ['view_resort', 'open_official', 'add_favorite']);
+  assert.deepEqual(body.requests[2].dimensionFilter.filter.inListFilter.values, ['view_resort', 'open_official', 'add_favorite', 'share']);
   assert.deepEqual(body.requests[3].dimensionFilter.filter.inListFilter.values, ['play_camera', 'camera_offline']);
   assert.deepEqual(buildChannelRequest('today').dateRanges, [RANGES.today.dateRange]);
 });
@@ -44,6 +44,8 @@ test('응답을 화면용 값으로 바꾼다', () => {
           row(['view_resort', 'konjiam'], [5]),
           row(['view_resort', 'yongpyong'], [9]),
           row(['open_official', 'konjiam'], [3]),
+          row(['share', 'konjiam'], [4]),
+          row(['share', 'site'], [2]),
           row(['add_favorite', 'yongpyong'], [2]),
           row(['view_resort', '(not set)'], [1]),
           row(['view_resort', 'closed_resort'], [1]),
@@ -73,6 +75,9 @@ test('응답을 화면용 값으로 바꾼다', () => {
     ['closed_resort', 1, 0, 0],
     ['미분류', 1, 0, 0],
   ]);
+  assert.deepEqual(d.shares, { total: 6, site: 2 });
+  assert.equal(d.resorts.find((r) => r.name === '곤지암').shares, 4);
+  assert.equal(d.resorts.some((r) => r.name === 'site'), false);
   assert.deepEqual(d.cameras, [
     { resort: '모나용평', resortId: 'yongpyong', camera: '옐로우 슬로프', plays: 7, offline: 0 },
     { resort: '지산포레스트', resortId: 'jisan', camera: '레몬탑승장', plays: 1, offline: 4 },

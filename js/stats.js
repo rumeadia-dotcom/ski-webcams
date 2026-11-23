@@ -335,13 +335,13 @@ function dashboard() {
         card('시간대별 방문', '하루 중 몇 시에 들어오는지입니다. 한국 시간 기준입니다.', hourChart(state.hours)),
         card('요일별 방문', '무슨 요일에 많이 들어오는지입니다. 최근 28일을 요일별로 더한 값입니다.', weekdayChart(state.weekdays)))
       : card('시간대별 방문', '하루 중 몇 시에 들어오는지입니다. 한국 시간 기준입니다.', hourChart(state.hours)),
-    card('스키장별 조회', '많이 본 스키장 순서입니다. 작은 글씨는 공식 페이지로 이동한 횟수와 즐겨찾기에 추가한 횟수입니다.',
+    card('스키장별 조회', `많이 본 스키장 순서입니다. 작은 글씨는 공식 페이지로 이동한 횟수, 즐겨찾기에 추가한 횟수, 공유한 횟수입니다. 공유는 모두 ${fmt(data.shares.total)}회이고, 그중 목록 화면에서 사이트를 공유한 것이 ${fmt(data.shares.site)}회입니다.`,
       data.resorts.length
         ? rankRows(data.resorts, {
           valueOf: (r) => r.views,
           labelOf: (r) => r.name,
           unit: '회',
-          extra: (r) => `공식 페이지 이동 ${fmt(r.official)} · 즐겨찾기 ${fmt(r.favorites)}`,
+          extra: (r) => `공식 페이지 ${fmt(r.official)} · 즐겨찾기 ${fmt(r.favorites)} · 공유 ${fmt(r.shares)}`,
         })
         : empty('아직 데이터가 없습니다. 스키장별 통계는 수집을 시작한 뒤 하루 정도 지나야 나옵니다.')),
     card('카메라별 재생', '재생이 많은 순서입니다. 송출 없음의 괄호는 재생을 시도한 횟수 중 비율입니다.',
