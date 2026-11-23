@@ -141,3 +141,22 @@ test('내 출발지: 저장하고, 고른 도시를 맨 앞으로 나눈다', as
   assert.deepEqual(arrangeRoutes(routes, null), { mine: null, others: routes });
   assert.deepEqual(arrangeRoutes(routes, '부산'), { mine: null, others: routes }); // 목록에서 빠진 도시
 });
+
+test('교통 불러오기는 AbortSignal.timeout 이 없는 브라우저에서도 동작하고, 제한 시간이 지나면 끊는다', async () => {
+  const { loadTraffic } = await import('../js/traffic.js');
+  const original = AbortSignal.timeout;
+  AbortSignal.timeout = undefined;
+  try {
+    const ok = async (_url, { signal }) => {
+      assert.equal(signal.aborted, false);
+      return { ok: true, json: async () => ({ routes: [{ from: '서울' }] }) };
+    };
+    assert.deepEqual(await loadTraffic('jisan', { fetch: ok }), { routes: [{ from: '서울' }] });
+    const hang = (_url, { signal }) => new Promise((_resolve, reject) => {
+      signal.addEventListener('abort', () => reject(new Error('aborted')));
+    });
+    assert.equal(await loadTraffic('jisan', { fetch: hang, timeoutMs: 20 }), null);
+  } finally {
+    AbortSignal.timeout = original;
+  }
+});

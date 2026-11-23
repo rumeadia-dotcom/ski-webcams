@@ -18,8 +18,15 @@ export async function checkCam(cam, { fetchFn = globalThis.fetch, timeoutMs = 40
   }
 }
 
-// 자동으로 틀 카메라: 원래 틀려던 카메라가 꺼져 있으면 꺼지지 않은 첫 카메라. 모두 꺼졌으면 null.
-export function pickCam(cams, states, preferred) {
-  if (states.get(preferred) !== 'off') return preferred;
-  return cams.find((cam) => states.get(cam) !== 'off') ?? null;
+// 확인 결과가 하나씩 들어올 때마다 무엇을 할지 정한다.
+//   { action: 'start', cam } 이 카메라를 튼다 / { action: 'allOff' } 모두 꺼졌다 / { action: 'wait' } 결과를 더 기다린다
+// 틀려던 카메라가 꺼지지 않았으면 그 카메라, 꺼졌으면 살아 있다고 확인된 카메라 중 목록에서 가장 앞선 것.
+// 답이 늦은 카메라를 기다리느라 살아 있는 카메라의 재생을 미루지 않는다.
+export function decideStart(cams, states, preferred) {
+  const wanted = states.get(preferred);
+  if (wanted === undefined) return { action: 'wait' };
+  if (wanted !== 'off') return { action: 'start', cam: preferred };
+  const alive = cams.find((cam) => states.has(cam) && states.get(cam) !== 'off');
+  if (alive) return { action: 'start', cam: alive };
+  return cams.every((cam) => states.has(cam)) ? { action: 'allOff' } : { action: 'wait' };
 }

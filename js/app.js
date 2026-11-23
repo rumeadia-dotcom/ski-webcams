@@ -3,7 +3,7 @@ import { loadFavorites, toggleFavorite, sortResorts } from './favorites.js';
 import { getWeather, lastWeatherError, weatherNote, amountLabel, boardWeather } from './weather.js';
 import { detectEnv } from './browser.js';
 import { createPlayer } from './player.js';
-import { checkCam, pickCam } from './health.js';
+import { checkCam, decideStart } from './health.js';
 import { parseRoute } from './route.js';
 import { createAnalytics } from './analytics.js';
 import { share, shareUrl } from './share.js';
@@ -174,9 +174,12 @@ function shareButton(resort) {
       const title = resort ? `${resort.name}${cam ? ` ${cam.name}` : ''} 실시간 웹캠` : '스키장 웹캠';
       const result = await share({ title, url });
       if (result === 'cancelled') return;
+      if (result === 'failed') {
+        toast(`복사하지 못했습니다. ${url}`); // 공유되지 않았으므로 공유 횟수에 넣지 않는다
+        return;
+      }
       analytics.track('share', { resort_id: resort?.id ?? 'site', method: result });
       if (result === 'copied') toast('주소를 복사했습니다');
-      if (result === 'failed') toast(`복사하지 못했습니다. ${url}`);
     },
   });
 }
@@ -402,6 +405,7 @@ function directStage(resort, firstCam = 0) {
   const off = new Set(); // 이번 화면에서 송출이 없다고 확인된 카메라
   let current = null;
   let startedAuto = false;
+  let isPlaying = false;
 
   const messages = {
     idle: () => [h('p', {}, '카메라를 선택하세요')],
@@ -434,6 +438,7 @@ function directStage(resort, firstCam = 0) {
         auto: startedAuto,
       });
     }
+    isPlaying = next === 'playing';
     overlay.replaceChildren(...messages[next]());
     overlay.hidden = next === 'playing' || next === 'blocked';
     // 송출이 없거나 멈춘 상태에서도 어느 카메라를 고른 것인지 표시를 유지한다.
@@ -474,39 +479,48 @@ function directStage(resort, firstCam = 0) {
   player = createPlayer(media, { onState, preferNative: env.os === 'ios' });
   onState('idle');
   // 들어오면 각 카메라의 스트림이 살아 있는지 먼저 확인하고, 꺼진 카메라는 건너뛰어 재생한다.
-  // 틀려던 카메라가 살아 있으면 나머지 확인을 기다리지 않는다.
   let checkRun = 0;
-  autoStart = async () => {
+  autoStart = () => {
     const mine = ++checkRun;
     const preferred = resort.cams[firstCam] ?? resort.cams[0];
     const states = new Map();
-    // 확인하는 사이 화면을 떠났거나, 다시 확인을 눌렀거나, 사용자가 직접 카메라를 고르면 손대지 않는다.
-    const usable = () => mine === checkRun && media.isConnected && current === null;
+    let decided = false;
     current = null;
     onState('loading');
-    // 틀려던 카메라는 재생 시작을 붙잡고 있으므로 짧게만 기다린다. 나머지는 늦게 답하는 서버도 있어 넉넉히 기다려 표시만 한다.
-    const checks = resort.cams.map((cam) => checkCam(cam, { timeoutMs: cam === preferred ? 4000 : 12000 }).then((state) => {
+
+    const onResult = (cam, state) => {
+      // 그 사이 화면을 떠났거나 "다시 확인"을 눌렀으면 이 결과는 버린다.
+      if (mine !== checkRun || !media.isConnected) return;
       states.set(cam, state);
-      if (mine === checkRun && media.isConnected && state === 'off') {
-        off.add(cam);
-        paintButtons();
+      // 지금 잘 나오고 있는 카메라는 확인 요청이 한 번 실패했다고 꺼짐으로 바꾸지 않는다.
+      if (state === 'off' && !(cam === current && isPlaying)) off.add(cam);
+      else if (state !== 'off') off.delete(cam);
+      paintButtons();
+
+      // 사용자가 직접 카메라를 골랐으면 자동 재생은 하지 않는다.
+      if (decided || current !== null) return;
+      const decision = decideStart(resort.cams, states, preferred);
+      if (decision.action === 'wait') return;
+      decided = true;
+      if (decision.action === 'allOff') {
+        showAllOff();
+        return;
       }
-      return state;
-    }));
-    if ((await checks[resort.cams.indexOf(preferred)]) !== 'off') {
-      if (usable()) start(preferred, true);
-      return;
+      // 확인하는 사이 탭이 가려졌으면 틀지 않는다. 보지 않는 영상이 데이터를 쓰지 않게 한다.
+      if (document.hidden) {
+        onState('idle');
+        return;
+      }
+      start(decision.cam, true);
+      // 공유받은 주소가 가리킨 카메라가 꺼져 있을 때만 바뀐 것을 알린다.
+      if (decision.cam !== preferred && firstCam > 0) {
+        toast(`${preferred.name} 카메라는 송출이 없어 ${decision.cam.name} 카메라를 보여 줍니다`);
+      }
+    };
+    // 틀려던 카메라는 재생 시작을 붙잡고 있으므로 짧게만 기다린다. 나머지는 늦게 답하는 서버도 있어 넉넉히 기다려 표시한다.
+    for (const cam of resort.cams) {
+      checkCam(cam, { timeoutMs: cam === preferred ? 4000 : 12000 }).then((state) => onResult(cam, state));
     }
-    await Promise.all(checks);
-    if (!usable()) return;
-    const next = pickCam(resort.cams, states, preferred);
-    if (!next) {
-      showAllOff();
-      return;
-    }
-    start(next, true);
-    // 공유받은 주소가 가리킨 카메라가 꺼져 있을 때만 바뀐 것을 알린다.
-    if (firstCam > 0) toast(`${preferred.name} 카메라는 송출이 없어 ${next.name} 카메라를 보여 줍니다`);
   };
 
   return [
@@ -592,16 +606,23 @@ function render() {
 }
 
 let weatherLoading = false;
+let weatherAt = 0; // 지금 화면의 날씨를 받은 시각
+const WEATHER_REFRESH_MS = 30 * 60 * 1000;
 
 // 날씨는 화면과 따로 불러온다. 실패했으면 다음 화면 이동 때 다시 시도한다.
+// 받은 지 30분이 지났으면 다시 받는다. 탭을 오래 열어 두어도 옛 날씨가 남지 않게 한다.
 function loadWeather() {
-  if (weatherLoading || state.weather) return;
+  if (weatherLoading) return;
+  if (state.weather && Date.now() - weatherAt < WEATHER_REFRESH_MS) return;
   weatherLoading = true;
   getWeather({ storage })
     .catch(() => null)
     .then((weather) => {
       weatherLoading = false;
+      // 다시 받기에 실패했으면 보이던 날씨를 지우지 않고 다음 기회에 다시 시도한다.
+      if (!weather && state.weather) return;
       state.weather = weather;
+      weatherAt = Date.now();
       redrawWeather();
     });
 }
@@ -622,6 +643,10 @@ window.addEventListener('hashchange', () => {
   // 화면이 바뀌면 제목으로 포커스를 옮겨, 키보드·스크린리더가 새 화면 처음부터 읽게 한다.
   app.querySelector('h1')?.focus({ preventScroll: true });
   loadWeather();
+});
+// 가려 두었던 탭으로 돌아오면 날씨가 오래됐는지 확인한다(영상은 다시 틀지 않는다).
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) loadWeather();
 });
 loadWeather(); // 화면 그리기에서 오류가 나더라도 날씨는 불러오도록 먼저 시작한다
 render();

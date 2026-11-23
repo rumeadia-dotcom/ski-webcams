@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { checkCam, pickCam } from '../js/health.js';
+import { checkCam, decideStart } from '../js/health.js';
 
 const cam = { name: '정상', type: 'hls', src: 'https://stream.example/a.m3u8' };
 const reply = (status, body = '') => async () => ({ ok: status >= 200 && status < 300, status, text: async () => body });
@@ -34,13 +34,33 @@ test('요청은 캐시 없이 스트림 주소로 보낸다', async () => {
   assert.deepEqual(seen, [[cam.src, 'no-store']]);
 });
 
-test('pickCam: 꺼진 카메라를 건너뛰고, 모두 꺼졌으면 null', () => {
+test('decideStart: 틀려던 카메라의 결과가 오기 전에는 기다린다', () => {
   const [a, b, c] = [{ name: 'a' }, { name: 'b' }, { name: 'c' }];
   const cams = [a, b, c];
-  assert.equal(pickCam(cams, new Map([[a, 'live'], [b, 'off']]), a), a);
-  assert.equal(pickCam(cams, new Map([[a, 'unknown']]), a), a);
-  assert.equal(pickCam(cams, new Map([[a, 'off'], [b, 'off'], [c, 'live']]), a), c);
-  assert.equal(pickCam(cams, new Map([[a, 'off'], [b, 'unknown'], [c, 'live']]), a), b);
-  assert.equal(pickCam(cams, new Map([[a, 'live'], [b, 'off'], [c, 'live']]), b), a);
-  assert.equal(pickCam(cams, new Map([[a, 'off'], [b, 'off'], [c, 'off']]), a), null);
+  assert.deepEqual(decideStart(cams, new Map(), a), { action: 'wait' });
+  assert.deepEqual(decideStart(cams, new Map([[b, 'live']]), a), { action: 'wait' });
+});
+
+test('decideStart: 틀려던 카메라가 꺼지지 않았으면 바로 그 카메라', () => {
+  const [a, b] = [{ name: 'a' }, { name: 'b' }];
+  assert.deepEqual(decideStart([a, b], new Map([[a, 'live']]), a), { action: 'start', cam: a });
+  assert.deepEqual(decideStart([a, b], new Map([[a, 'unknown']]), a), { action: 'start', cam: a });
+  assert.deepEqual(decideStart([a, b], new Map([[b, 'live'], [a, 'off']]), b), { action: 'start', cam: b });
+});
+
+test('decideStart: 틀려던 카메라가 꺼졌으면, 살아 있다고 확인된 카메라가 나오는 대로 그것을 튼다', () => {
+  const [a, b, c] = [{ name: 'a' }, { name: 'b' }, { name: 'c' }];
+  const cams = [a, b, c];
+  // 아직 다른 결과가 없으면 기다린다
+  assert.deepEqual(decideStart(cams, new Map([[a, 'off']]), a), { action: 'wait' });
+  // 늦게 답하는 b 를 기다리지 않고 이미 살아 있다고 확인된 c 를 튼다
+  assert.deepEqual(decideStart(cams, new Map([[a, 'off'], [c, 'live']]), a), { action: 'start', cam: c });
+  // 여러 대가 확인됐으면 목록에서 앞선 것
+  assert.deepEqual(decideStart(cams, new Map([[a, 'off'], [b, 'unknown'], [c, 'live']]), a), { action: 'start', cam: b });
+  assert.deepEqual(decideStart(cams, new Map([[a, 'off'], [b, 'off']]), a), { action: 'wait' });
+});
+
+test('decideStart: 모두 꺼졌다고 확인되면 allOff', () => {
+  const [a, b] = [{ name: 'a' }, { name: 'b' }];
+  assert.deepEqual(decideStart([a, b], new Map([[a, 'off'], [b, 'off']]), a), { action: 'allOff' });
 });

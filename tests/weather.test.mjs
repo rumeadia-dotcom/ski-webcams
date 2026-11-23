@@ -224,3 +224,42 @@ test('전광판 한 줄: 지금 날씨와 기온, 눈 소식이 있으면 덧붙
   assert.deepEqual(boardWeather({ kind: 'rain', temp: 3, days: days(0, 0) }, { rain: '비' }), ['지금 비', '3°']);
   assert.equal(boardWeather(undefined, {}), null);
 });
+
+test('오늘은 응답에 적힌 현재 시각의 날짜로 정한다(칸 순서로 정하지 않는다)', () => {
+  const body = location(1, 3);
+  body.current.time = '2026-11-18T09:15';
+  const w = parseWeather(body, [two[0]]);
+  assert.deepEqual(w.a.days.map((d) => d.isToday), [false, false, false, false, true, false, false]);
+  // 현재 시각이 없거나 날짜가 목록에 없으면 예전처럼 네 번째 칸
+  body.current.time = '2030-01-01T00:00';
+  assert.equal(parseWeather(body, [two[0]]).a.days[3].isToday, true);
+});
+
+test('하루 묵은 응답은 쓰지 않고 다음 주소에서 다시 받는다', async () => {
+  const now = Date.parse('2026-11-18T08:00:00+09:00');
+  const stale = [location(1, 3), location(2, 3)];
+  stale.forEach((l) => { l.current.time = '2026-11-17T22:00'; });
+  const fresh = [location(5, 3), location(6, 3)];
+  fresh.forEach((l) => { l.current.time = '2026-11-18T07:45'; });
+  const urls = [];
+  const fetch = async (url) => {
+    urls.push(url);
+    return { ok: true, json: async () => (urls.length === 1 ? stale : fresh) };
+  };
+  const w = await getWeather({ fetch, storage: memoryStorage(), now: () => now, resorts: two });
+  assert.equal(urls.length, 2);
+  assert.equal(w.a.temp, 5);
+  assert.equal(w.a.days.find((d) => d.isToday).date, '2026-11-18');
+});
+
+test('저장해 둔 날씨를 자정 넘어 꺼내면 오늘 표시를 새 날짜로 옮긴다', async () => {
+  const body = [location(1, 3), location(2, 3)];
+  body.forEach((l) => { l.current.time = '2026-11-17T23:50'; });
+  const storage = memoryStorage();
+  const before = Date.parse('2026-11-17T23:55:00+09:00');
+  const first = await getWeather({ fetch: okFetch(body), storage, now: () => before, resorts: two });
+  assert.equal(first.a.days.find((d) => d.isToday).date, '2026-11-17');
+  const after = Date.parse('2026-11-18T00:10:00+09:00');
+  const second = await getWeather({ fetch: okFetch(body), storage, now: () => after, resorts: two });
+  assert.equal(second.a.days.find((d) => d.isToday).date, '2026-11-18');
+});

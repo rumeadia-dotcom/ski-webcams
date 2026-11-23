@@ -21,6 +21,15 @@ export function sharedLocation(href) {
   return url.href;
 }
 
+// 공유 표식과 utm 을 뺀 주소. 측정이 끝난 뒤 주소창을 되돌릴 때 쓴다.
+export function cleanLocation(href) {
+  const url = new URL(href);
+  for (const key of ['s', 'utm_source', 'utm_medium']) url.searchParams.delete(key);
+  return url.href;
+}
+
+const CLEAN_DELAY_MS = 3000; // 측정 스크립트가 첫 기록을 보낼 시간을 준다
+
 // track(name, params) 하나만 가진 객체를 돌려준다. 통계는 어떤 경우에도 사이트 동작을 막지 않는다.
 export function createAnalytics({
   win = globalThis.window,
@@ -47,6 +56,19 @@ export function createAnalytics({
     const script = doc.createElement('script');
     script.async = true;
     script.src = `https://www.googletagmanager.com/gtag/js?id=${MEASUREMENT_ID}`;
+    if (shared) {
+      // 표식이 주소에 남으면 새로고침하거나 즐겨찾기로 다시 올 때마다 공유 방문으로 잡힌다.
+      // 측정 스크립트가 주소를 읽은 뒤(불러오지 못했을 때도) 표식을 지운다. 그 사이 화면을 옮겼으면 그 주소를 지킨다.
+      const clean = () => (win.setTimeout ?? setTimeout)(() => {
+        try {
+          win.history?.replaceState(win.history.state, '', cleanLocation(win.location?.href ?? shared));
+        } catch {
+          // 주소를 못 바꿔도 사이트는 그대로 쓴다.
+        }
+      }, CLEAN_DELAY_MS);
+      script.addEventListener?.('load', clean, { once: true });
+      script.addEventListener?.('error', clean, { once: true });
+    }
     doc.head.append(script);
   } catch {
     // 스크립트를 넣지 못해도 사이트는 그대로 쓴다.

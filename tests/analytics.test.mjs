@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createAnalytics, MEASUREMENT_ID } from '../js/analytics.js';
+import { createAnalytics, cleanLocation, MEASUREMENT_ID } from '../js/analytics.js';
 
 // 브라우저 대신 쓰는 최소한의 가짜 환경
 function fakeBrowser() {
@@ -64,4 +64,28 @@ test('측정 스크립트 삽입이 실패해도 예외를 던지지 않는다',
   const doc = { createElement: () => { throw new Error('blocked'); }, head: { append() {} } };
   const analytics = createAnalytics({ win, doc, host: 'ski-webcams.vercel.app' });
   assert.doesNotThrow(() => analytics.track('view_resort', { resort_id: 'muju' }));
+});
+
+test('측정 스크립트가 주소를 읽은 뒤에는 공유 표식을 주소에서 지운다', () => {
+  assert.equal(cleanLocation('https://ski-webcams.vercel.app/?s=1&utm_source=share&utm_medium=social#/resort/jisan'), 'https://ski-webcams.vercel.app/#/resort/jisan');
+  assert.equal(cleanLocation('https://ski-webcams.vercel.app/?cam=3&s=1#/resort/jisan'), 'https://ski-webcams.vercel.app/?cam=3#/resort/jisan');
+
+  const replaced = [];
+  const listeners = {};
+  const win = {
+    history: { state: null, replaceState: (_s, _t, url) => { replaced.push(url); win.location.href = url; } },
+    location: { href: 'https://ski-webcams.vercel.app/?s=1#/resort/jisan' },
+    setTimeout: (fn) => fn(),
+  };
+  const doc = {
+    createElement: () => ({ addEventListener: (name, fn) => { listeners[name] = fn; } }),
+    head: { append() {} },
+  };
+  createAnalytics({ win, doc, host: 'ski-webcams.vercel.app', href: win.location.href });
+  assert.equal(replaced.length, 1);
+  assert.match(replaced[0], /utm_source=share/);
+  // 그 사이 방문자가 다른 스키장으로 옮겼어도 그 화면 주소를 지킨다
+  win.location.href = replaced[0].replace('#/resort/jisan', '#/resort/phoenix');
+  listeners.load();
+  assert.equal(replaced.at(-1), 'https://ski-webcams.vercel.app/#/resort/phoenix');
 });

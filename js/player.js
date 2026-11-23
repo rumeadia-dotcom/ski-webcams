@@ -55,12 +55,14 @@ export function createPlayer(container, { onState, preferNative = false }) {
     const mine = session;
     const alive = () => mine === session;
     let hasStarted = false;
+    let blocked = false; // 자동 재생이 막혀 사용자가 재생 버튼을 누르기를 기다리는 상태
     onState('loading');
 
     const fail = () => alive() && stop('offline');
     // 내려받기가 진행되는 동안에는 기다린다. 느린 회선에서 정상 스트림을 끊지 않기 위해서다.
     const progress = () => {
-      if (!alive() || hasStarted) return;
+      // 재생 버튼을 기다리는 동안에는 멈춤 검사를 하지 않는다. 살아 있는 영상을 송출 없음으로 바꾸지 않기 위해서다.
+      if (!alive() || hasStarted || blocked) return;
       clearTimeout(stallTimer);
       stallTimer = setTimeout(fail, STALL_TIMEOUT_MS);
     };
@@ -123,6 +125,7 @@ export function createPlayer(container, { onState, preferNative = false }) {
       video.play().catch((error) => {
         // 자동 재생이 막힌 경우에만 사용자가 영상의 재생 버튼을 누르도록 넘긴다.
         if (!alive() || hasStarted || error?.name !== 'NotAllowedError') return;
+        blocked = true;
         clearTimeout(stallTimer);
         onState('blocked');
       });

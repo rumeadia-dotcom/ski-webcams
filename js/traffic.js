@@ -71,13 +71,18 @@ export function formatDuration(minutes) {
 
 // 화면에서 쓰는 불러오기. 실패하면 null.
 export async function loadTraffic(resortId, { fetch = globalThis.fetch, timeoutMs = 10000 } = {}) {
+  // AbortSignal.timeout 은 오래된 브라우저에 없어서 직접 시간을 잰다.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(`/api/traffic?resort=${encodeURIComponent(resortId)}`, { signal: AbortSignal.timeout(timeoutMs) });
+    const res = await fetch(`/api/traffic?resort=${encodeURIComponent(resortId)}`, { signal: controller.signal });
     if (!res.ok) return null;
     const data = await res.json();
     return Array.isArray(data?.routes) && data.routes.length > 0 ? data : null;
   } catch {
     return null;
+  } finally {
+    clearTimeout(timer);
   }
 }
 

@@ -14,8 +14,9 @@ export default async function handler(_req, res) {
     }
     const body = await upstream.text();
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    // 방문자 쪽에는 저장하지 않고, Vercel CDN 이 30분 저장한다. 갱신 중에는 이전 응답을 준다.
-    res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=1800, stale-while-revalidate=86400');
+    // 방문자 쪽에는 저장하지 않고, Vercel CDN 이 30분 저장한다. 그 뒤 10분까지만 이전 응답을 주며 새로 받는다.
+    // 이 시간을 길게 두면 밤새 방문이 없다가 아침 첫 방문자가 어제 날씨를 받는다.
+    res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=1800, stale-while-revalidate=600');
     res.status(200).send(body);
   } catch {
     res.status(502).json({ error: true });

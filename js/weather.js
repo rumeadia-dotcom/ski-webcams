@@ -3,7 +3,11 @@ import { RESORTS } from './data.js';
 const KEY = 'ski.weather.v2'; // 기간이 바뀌면 이름을 바꿔 예전 저장본을 버린다
 const TTL_MS = 30 * 60 * 1000;
 const TIMEOUT_MS = 8000; // 응답이 멈춘 채 끝나지 않는 연결을 끊는 시간
-const TODAY_INDEX = 3; // past_days=3 이므로 네 번째 날이 오늘
+const TODAY_INDEX = 3; // past_days=3 이므로 보통 네 번째 날이 오늘. 응답에 현재 시각이 없을 때만 쓴다
+const STALE_MS = 2 * 60 * 60 * 1000; // 현재 시각이 이보다 오래된 응답은 쓰지 않는다
+const KST_MS = 9 * 60 * 60 * 1000;
+
+const seoulDate = (ms) => new Date(ms + KST_MS).toISOString().slice(0, 10);
 
 // WMO 날씨 코드 → 화면 표시용 분류
 export function weatherKind(code) {
@@ -31,7 +35,11 @@ export function buildWeatherUrl(resorts) {
 function parseLocation(loc) {
   const { current, daily } = loc ?? {};
   if (!current || !daily || !Array.isArray(daily.time)) return null;
+  // 오늘은 응답에 적힌 현재 시각의 날짜로 정한다. 칸 순서로 정하면 묵은 응답에서 어제가 오늘이 된다.
+  const nowDate = typeof current.time === 'string' ? current.time.slice(0, 10) : null;
+  const todayIndex = daily.time.includes(nowDate) ? daily.time.indexOf(nowDate) : TODAY_INDEX;
   return {
+    at: typeof current.time === 'string' ? current.time : null, // 관측 기준 시각 'YYYY-MM-DDTHH:MM' (한국 시간)
     temp: current.temperature_2m,
     precip: current.precipitation,
     kind: weatherKind(current.weather_code),
@@ -43,7 +51,7 @@ function parseLocation(loc) {
       min: daily.temperature_2m_min?.[i],
       precip: daily.precipitation_sum?.[i],
       snow: daily.snowfall_sum?.[i],
-      isToday: i === TODAY_INDEX,
+      isToday: i === todayIndex,
     })),
   };
 }
@@ -114,7 +122,7 @@ function readCache(storage, now) {
   return null;
 }
 
-// 마지막 실패 원인: null(성공) | 'timeout' | 'http-<상태코드>' | 'network' | 'empty'
+// 마지막 실패 원인: null(성공) | 'timeout' | 'http-<상태코드>' | 'network' | 'empty' | 'stale'
 export let lastWeatherError = null;
 
 // 같은 사이트의 서버 기능. 카카오톡 같은 앱 안 브라우저는 다른 사이트(날씨 서버)로 보내는 요청이
@@ -122,7 +130,25 @@ export let lastWeatherError = null;
 export const PROXY_URL = '/api/weather';
 
 // 주소 하나에서 날씨를 받아 온다. 실패하면 원인 코드를 message 로 가진 Error 를 던진다.
-async function fetchFrom(fetch, url, resorts, timeoutMs) {
+// 응답의 현재 시각이 지금보다 2시간 넘게 뒤처졌으면 묵은 응답이다(중간 저장소가 옛 응답을 준 경우).
+function isStale(data, now) {
+  const at = Object.values(data)[0]?.at;
+  if (!at) return false;
+  const measured = Date.parse(`${at}:00+09:00`);
+  return Number.isFinite(measured) && now - measured > STALE_MS;
+}
+
+// 저장해 둔 날씨를 자정 넘어 꺼내면 오늘 표시가 어제에 남는다. 지금 날짜가 목록에 있으면 그 날로 옮긴다.
+function markToday(data, now) {
+  const today = seoulDate(now);
+  for (const w of Object.values(data)) {
+    if (!w.days.some((d) => d.date === today)) continue;
+    w.days = w.days.map((d) => ({ ...d, isToday: d.date === today }));
+  }
+  return data;
+}
+
+async function fetchFrom(fetch, url, resorts, timeoutMs, now) {
   const controller = new AbortController();
   let timer;
   let timedOut = false;
@@ -142,9 +168,10 @@ async function fetchFrom(fetch, url, resorts, timeoutMs) {
     };
     const data = parseWeather(await Promise.race([load(), timeout]), resorts);
     if (Object.keys(data).length === 0) throw new Error('empty');
+    if (isStale(data, now)) throw new Error('stale');
     return data;
   } catch (error) {
-    const code = timedOut ? 'timeout' : /^(http-\d+|empty)$/.test(error?.message) ? error.message : 'network';
+    const code = timedOut ? 'timeout' : /^(http-\d+|empty|stale)$/.test(error?.message) ? error.message : 'network';
     throw new Error(code);
   } finally {
     clearTimeout(timer);
@@ -160,17 +187,17 @@ export async function getWeather({
   timeoutMs = TIMEOUT_MS,
 } = {}) {
   const cached = readCache(storage, now());
-  if (cached) return cached;
+  if (cached) return markToday(cached, now());
   for (const url of [PROXY_URL, buildWeatherUrl(resorts)]) {
     try {
-      const data = await fetchFrom(fetch, url, resorts, timeoutMs);
+      const data = await fetchFrom(fetch, url, resorts, timeoutMs, now());
       lastWeatherError = null;
       try {
         storage.setItem(KEY, JSON.stringify({ at: now(), data }));
       } catch {
         // 캐시 저장 실패는 무시한다.
       }
-      return data;
+      return markToday(data, now());
     } catch (error) {
       lastWeatherError = error.message; // 다음 주소로 넘어간다
     }
