@@ -56,7 +56,7 @@ web
 - 실제 웹캠 영상 주소와 스키장 목록: `js/data.js`
 - 실제 날씨·교통 데이터: `/api/weather`, `/api/traffic`
 - 아이콘: `img/sticker-144.png`, `img/touch-180.png`(원본 고해상도 파일 없음), 대안 아이콘 `design/app-icon-512.png`
-- 공유 미리보기 그림: `img/og.png`
+- 공유 미리보기 그림: `img/og-2.png`
 - 없는 것(지어내지 말 것): 사용자 후기, 방문자 수 같은 실적 수치, 스키장과의 제휴 관계, 적설량 실측값, 혼잡도.
 
 ## Product Principles
