@@ -8,10 +8,10 @@ const byId = Object.fromEntries(RESORTS.map((r) => [r.id, r]));
 const KR = RESORTS.filter((r) => r.country !== 'jp');
 const JP = RESORTS.filter((r) => r.country === 'jp');
 
-test('국내 13곳 + 일본 13곳, id 중복 없음', () => {
+test('국내 13곳 + 일본 12곳, id 중복 없음', () => {
   assert.equal(KR.length, 13);
-  assert.equal(JP.length, 13);
-  assert.equal(new Set(RESORTS.map((r) => r.id)).size, 26);
+  assert.equal(JP.length, 12);
+  assert.equal(new Set(RESORTS.map((r) => r.id)).size, 25);
 });
 
 test('일본 스키장: 국내 뒤에 모여 있고, 유튜브 카메라와 지역 이름을 가진다', () => {
@@ -35,7 +35,7 @@ test('일본 스키장: 국내 뒤에 모여 있고, 유튜브 카메라와 지�
       ids.add(cam.src);
     }
   }
-  assert.equal(ids.size, 43);
+  assert.equal(ids.size, 47);
 });
 
 test('방식별 분류', () => {

@@ -1,15 +1,15 @@
 {
-  "niseko-village/곤돌라 베이스": {
+  "niseko/빌리지 곤돌라 베이스": {
     "title": "Niseko village Niseko gondola",
     "channel": "UCq8U31WJmnaVGevIZG7cSLQ",
     "page": "https://www.niseko-village.com/ja/nisekovillage/webcam/"
   },
-  "niseko-village/그린 리프": {
+  "niseko/빌리지 그린 리프": {
     "title": "Niseko Village Green Leaf",
     "channel": "UCq8U31WJmnaVGevIZG7cSLQ",
     "page": "https://www.niseko-village.com/ja/nisekovillage/webcam/"
   },
-  "niseko-hanazono/베이스": {
+  "niseko/하나조노 베이스": {
     "title": "[4K] Live Camera - Niseko Hanazono Resort",
     "channel": "UCrNyeY4kGLL0-Hs8wC98peg"
   },
@@ -195,5 +195,25 @@
   "arai/롯폰기 스테이션": {
     "title": "アライマウンテンリゾートのライブ配信",
     "channel": "UCykbn5kKdajksZb7C0UyY7A"
+  },
+  "niseko/히라후 베이스": {
+    "title": "Niseko Tokyu Grand HIRAFU Live Camera (.Base)",
+    "channel": "UCi5rodStpvsXMJMXAvk-OnA",
+    "page": "https://www.grand-hirafu.jp/livecam/"
+  },
+  "niseko/히라후 마운틴 센터": {
+    "title": "Niseko Tokyu Grand HIRAFU Live Camera (Mountain Center)",
+    "channel": "UCi5rodStpvsXMJMXAvk-OnA",
+    "page": "https://www.grand-hirafu.jp/livecam/"
+  },
+  "niseko/히라후 에이스 힐 (요테이산 쪽)": {
+    "title": "Niseko Tokyu Grand HIRAFU Live Camera (Ace Hill Yotei Side)",
+    "channel": "UCi5rodStpvsXMJMXAvk-OnA",
+    "page": "https://www.grand-hirafu.jp/livecam/"
+  },
+  "niseko/안누푸리 전경": {
+    "title": "[4K]ニセコアンヌプリ国際スキー場ライブカメラ",
+    "channel": "UCrgX2wz-e6y2no7Vhqqn29A",
+    "page": "https://www.niseko.ne.jp/ja/livecamera/"
   }
 }

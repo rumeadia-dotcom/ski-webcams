@@ -193,26 +193,25 @@ export const RESORTS = [
   },
   // ---------- 일본 ----------
   {
-    id: 'niseko-village',
-    name: '니세코 빌리지',
+    // 니세코 유나이티드의 네 스키장(그랑 히라후, 하나조노, 니세코 빌리지, 안누푸리)을 한 곳으로 묶었다. 한 산을 나눠 쓰고 리프트권도 함께 쓴다.
+    id: 'niseko',
+    name: '니세코',
     country: 'jp',
     area: '홋카이도',
-    lat: 42.8474,
-    lon: 140.6755,
+    lat: 42.8645,
+    lon: 140.6992, // 그랑 히라후
     mode: 'direct',
-    officialUrl: 'https://www.niseko-village.com/ja/nisekovillage/webcam/',
-    cams: [yt('곤돌라 베이스', 'w1BuUCVYdsQ'), yt('그린 리프', 'WMAL8MGGnRg')],
-  },
-  {
-    id: 'niseko-hanazono',
-    name: '니세코 하나조노',
-    country: 'jp',
-    area: '홋카이도',
-    lat: 42.8933,
-    lon: 140.6974,
-    mode: 'direct',
-    officialUrl: 'https://www.youtube.com/channel/UCrNyeY4kGLL0-Hs8wC98peg',
-    cams: [yt('베이스', '1ksmiy6EsDo')],
+    officialUrl: 'https://www.niseko.ne.jp/ja/livecamera/',
+    // 히라후 카메라 이름은 운영사가 유튜브 중계에 붙인 제목을 따랐다(2026-11-27 확인).
+    cams: [
+      yt('히라후 베이스', 'LQ_Cv4aFuq8'),
+      yt('히라후 마운틴 센터', 'taDZzy8yMTw'),
+      yt('히라후 에이스 힐 (요테이산 쪽)', '0zEQmoW6x8E'),
+      yt('하나조노 베이스', '1ksmiy6EsDo'),
+      yt('빌리지 곤돌라 베이스', 'w1BuUCVYdsQ'),
+      yt('빌리지 그린 리프', 'WMAL8MGGnRg'),
+      yt('안누푸리 전경', 'z4xJYd7931A'),
+    ],
   },
   {
     id: 'kiroro',
