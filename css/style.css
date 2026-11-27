@@ -519,7 +519,7 @@ a { text-underline-offset: 3px; }
 .board-part:active { opacity: 0.7; }
 .icon-btn, .back { border-radius: 12px; }
 @media (hover: hover) {
-  .row-link:hover, .fav:hover, .cam:hover, .route:hover, .btn-line:hover, .icon-btn:hover, .back:hover {
+  .row-link:hover, .welcome-snow a:hover, .side-brand:hover, .fav:hover, .cam:hover, .route:hover, .btn-line:hover, .icon-btn:hover, .back:hover {
     background-color: color-mix(in srgb, var(--accent) 6%, transparent);
   }
   .btn:hover { filter: brightness(1.06); }
@@ -585,6 +585,9 @@ a { text-underline-offset: 3px; }
   }
   .side-brand {
     display: flex;
+    margin-left: -8px;
+    padding: 4px 8px;
+    border-radius: 12px;
     align-items: center;
     gap: 8px;
     color: inherit;
@@ -626,14 +629,14 @@ a { text-underline-offset: 3px; }
   .is-wide .cams { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .is-wide .multi-hint { display: block; }
 
-  /* 첫 화면 안내 */
-  .is-wide .ridge { margin: 24px 0 8px; height: 56px; }
-  .welcome { max-width: 720px; padding-top: 8px; }
-  .welcome h1 { margin: 0 0 8px; font-size: var(--fs-figure); letter-spacing: -0.02em; }
-  .welcome h1:focus { outline: none; }
-  .welcome-lead { margin: 0; max-width: 34em; color: var(--muted); text-wrap: pretty; }
-  .welcome-snow { margin-top: 24px; }
+  /* 첫 화면 안내. 휴대폰 목록 화면과 같은 순서다: 제목 줄, 능선, 내용 */
+  .is-wide .ridge { margin: -4px -24px 12px 0; } /* 오른쪽은 화면 끝까지 잇는다 */
+  .is-wide .notice { max-width: 480px; }
+  .welcome { display: flex; flex-direction: column; gap: var(--gap-group); }
+  .welcome-lead { margin: 0; max-width: 32em; text-wrap: pretty; }
+  .welcome-snow { max-width: 480px; }
   .welcome-snow h2 { margin: 0 0 8px; font-size: var(--fs-body); }
+  .welcome-snow p { margin: 0; }
   .welcome-snow ul {
     margin: 0;
     padding: 0;
@@ -643,6 +646,7 @@ a { text-underline-offset: 3px; }
     background: var(--surface);
     overflow: hidden;
   }
+  .welcome-snow :focus-visible { outline-offset: -3px; border-radius: 12px; }
   .welcome-snow li + li { border-top: 1px solid var(--line); }
   .welcome-snow a {
     display: flex;
