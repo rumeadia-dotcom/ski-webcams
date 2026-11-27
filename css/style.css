@@ -557,8 +557,10 @@ a { text-underline-offset: 3px; }
     max-width: 1760px;
     padding-left: 24px;
     padding-right: 24px;
+    /* 왼쪽 목록이 창 높이를 꽉 채우므로 아래 여백을 여기에 두면 그만큼 화면이 스크롤된다. 여백은 내용 쪽에 둔다 */
+    padding-bottom: 0;
   }
-  .page { min-width: 0; }
+  .page { min-width: 0; padding-bottom: 24px; }
 
   /* 왼쪽 목록: 화면에 붙어 있고 따로 스크롤된다. 제목 줄 아래에 목록이 이어 붙은 한 덩어리다 */
   .side {
