@@ -111,3 +111,13 @@ test('국내 스키장은 하단과 정상 날씨 지점을 가진다', () => {
     }
   }
 });
+
+test('일본 스키장도 하단과 정상 날씨 지점을 가진다', () => {
+  for (const r of RESORTS.filter((x) => x.country === 'jp')) {
+    for (const point of [r.base, r.top]) {
+      assert.ok(point, r.id);
+      // 스키장 기본 좌표에서 멀리 벗어나지 않는다(약 6km 이내).
+      assert.ok(Math.abs(point.lat - r.lat) < 0.06 && Math.abs(point.lon - r.lon) < 0.07, r.id);
+    }
+  }
+});

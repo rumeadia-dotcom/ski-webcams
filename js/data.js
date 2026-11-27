@@ -3,6 +3,8 @@
 // 좌표 출처: OpenStreetMap Nominatim 검색 결과 (날씨 조회용)
 // 이 파일에는 IP 주소와 토큰이 든 주소를 적지 않는다.
 // base·top: 날씨를 하단과 정상으로 나눠 받는 지점(2026-11-27, 좌표는 공개 저장소 hletrd/slopes 의 스키하우스·정상 지점). 없으면 lat·lon 한 곳만 쓴다.
+// 일본 스키장의 base·top 은 OpenStreetMap 에 등록된 리프트 승강장 가운데 가장 낮은 곳과 가장 높은 곳이다(2026-11-27 조회).
+// 시가 고원은 구마노유 주변 1.5km 를 봐서 요코테야마 리프트가 정상으로 잡혔다.
 // 일본 스키장(country: 'jp')은 2026-11-27 추가. 카메라 목록은 공개 저장소 hletrd/slopes(Apache-2.0)를 참고했고,
 // 유튜브 중계가 살아 있는지는 유튜브 공개 조회로 확인했다. 유튜브 중계는 다시 시작하면 주소(영상 ID)가 바뀐다.
 // 그때는 화면의 공식 페이지 버튼으로 볼 수 있고, 여기 ID 를 새로 적어야 한다.
@@ -227,6 +229,8 @@ export const RESORTS = [
     area: '홋카이도',
     lat: 42.8645,
     lon: 140.6992, // 그랑 히라후
+    base: { lat: 42.85835, lon: 140.70201 }, // 가장 낮은 리프트 승강장
+    top: { lat: 42.87082, lon: 140.6624 }, // 가장 높은 리프트 승강장
     mode: 'direct',
     officialUrl: 'https://www.niseko.ne.jp/ja/livecamera/',
     // 히라후 카메라 이름은 운영사가 유튜브 중계에 붙인 제목을 따랐다(2026-11-27 확인).
@@ -247,6 +251,8 @@ export const RESORTS = [
     area: '홋카이도',
     lat: 43.0636,
     lon: 140.9989,
+    base: { lat: 43.07451, lon: 140.98438 }, // 가장 낮은 리프트 승강장
+    top: { lat: 43.05667, lon: 141.0267 }, // 가장 높은 리프트 승강장
     mode: 'direct',
     officialUrl: 'https://www.kiroro.co.jp/livecamera/',
     cams: [
@@ -263,6 +269,8 @@ export const RESORTS = [
     area: '홋카이도',
     lat: 43.3326,
     lon: 142.3281,
+    base: { lat: 43.3439, lon: 142.36011 }, // 가장 낮은 리프트 승강장
+    top: { lat: 43.32432, lon: 142.31925 }, // 가장 높은 리프트 승강장
     mode: 'direct',
     officialUrl: 'https://www.princehotels.co.jp/ski/furano/livecamera/',
     // 공식 페이지가 끼워 넣어 보여 주는 화면(SKIDAY)을 같은 주소로 끼워 넣는다. 유튜브가 아니라 자동 갱신 대상이 아니다.
@@ -278,6 +286,8 @@ export const RESORTS = [
     area: '도호쿠',
     lat: 38.1613,
     lon: 140.4077,
+    base: { lat: 38.15758, lon: 140.38394 }, // 가장 낮은 리프트 승강장
+    top: { lat: 38.15473, lon: 140.43118 }, // 가장 높은 리프트 승강장
     mode: 'direct',
     officialUrl: 'https://www.youtube.com/channel/UC1xeTccsAQdz7-fF0eAa5HA/streams',
     cams: [
@@ -299,6 +309,8 @@ export const RESORTS = [
     area: '간토',
     lat: 36.8115,
     lon: 139.3464,
+    base: { lat: 36.81432, lon: 139.32988 }, // 가장 낮은 리프트 승강장
+    top: { lat: 36.8068, lon: 139.3551 }, // 가장 높은 리프트 승강장
     mode: 'direct',
     officialUrl: 'https://www.marunuma.jp/winter/live/',
     cams: [
@@ -318,6 +330,8 @@ export const RESORTS = [
     area: '간토',
     lat: 36.8223,
     lon: 139.2066,
+    base: { lat: 36.81121, lon: 139.22926 }, // 가장 낮은 리프트 승강장
+    top: { lat: 36.83041, lon: 139.20331 }, // 가장 높은 리프트 승강장
     mode: 'direct',
     officialUrl: 'https://www.oze-iwakura.co.jp/ski/slopeguide/live/',
     cams: [
@@ -335,6 +349,8 @@ export const RESORTS = [
     area: '간토',
     lat: 36.631,
     lon: 138.5781,
+    base: { lat: 36.62789, lon: 138.58612 }, // 가장 낮은 리프트 승강장
+    top: { lat: 36.63017, lon: 138.56211 }, // 가장 높은 리프트 승강장
     mode: 'direct',
     officialUrl: 'https://www.932-onsen.com/common/live/',
     cams: [
@@ -350,6 +366,8 @@ export const RESORTS = [
     area: '주부',
     lat: 36.7036,
     lon: 137.8226,
+    base: { lat: 36.69824, lon: 137.83881 }, // 가장 낮은 리프트 승강장
+    top: { lat: 36.69697, lon: 137.79927 }, // 가장 높은 리프트 승강장
     mode: 'direct',
     officialUrl: 'https://www.happo-one.jp/gelande/livecamera/',
     cams: [
@@ -367,6 +385,8 @@ export const RESORTS = [
     area: '주부',
     lat: 36.6789,
     lon: 138.4957, // 구마노유 스키장
+    base: { lat: 36.68266, lon: 138.49651 }, // 가장 낮은 리프트 승강장
+    top: { lat: 36.67216, lon: 138.52049 }, // 가장 높은 리프트 승강장
     mode: 'direct',
     officialUrl: 'https://www.shigakogen.gr.jp/live/index.html',
     cams: [yt('구마노유 베이스', 'n4G4iQTme1g')],
@@ -378,6 +398,8 @@ export const RESORTS = [
     area: '주부',
     lat: 36.0688,
     lon: 138.3756,
+    base: { lat: 36.06909, lon: 138.38044 }, // 가장 낮은 리프트 승강장
+    top: { lat: 36.06983, lon: 138.37217 }, // 가장 높은 리프트 승강장
     mode: 'direct',
     officialUrl: 'https://yachiho-kogen.com/ski/manage25-26/index5_1-4-2.shtml',
     cams: [
@@ -394,6 +416,8 @@ export const RESORTS = [
     area: '주부',
     lat: 36.3364,
     lon: 138.6434,
+    base: { lat: 36.34035, lon: 138.64363 }, // 가장 낮은 리프트 승강장
+    top: { lat: 36.33384, lon: 138.64844 }, // 가장 높은 리프트 승강장
     mode: 'direct',
     officialUrl: 'https://www.youtube.com/channel/UCnXXZnHcM2Y-WX7U_fNR2Qg',
     cams: [yt('베이스', 'fqgXBt2ZzpE')],
@@ -405,6 +429,8 @@ export const RESORTS = [
     area: '주부',
     lat: 36.9909,
     lon: 138.1816,
+    base: { lat: 36.99084, lon: 138.1802 }, // 가장 낮은 리프트 승강장
+    top: { lat: 36.99319, lon: 138.13858 }, // 가장 높은 리프트 승강장
     mode: 'direct',
     officialUrl: 'https://www.youtube.com/channel/UCykbn5kKdajksZb7C0UyY7A/streams',
     cams: [yt('롯폰기 스테이션', 'kQskivhwAwE')],
