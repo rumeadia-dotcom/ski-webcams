@@ -4,7 +4,7 @@
 // 확실하지 않으면(확인 실패, 후보 없음, 후보 여럿) 아무것도 바꾸지 않는다.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { RESORTS } from '../js/data.js';
-import { parseLive, parseTitle, parseFeed, parsePageIds, chooseReplacement, applyReplacements } from './youtube-refresh-lib.mjs';
+import { parseLive, parseTitle, parseFeed, parsePageIds, parseApiVideos, chooseReplacement, applyReplacements } from './youtube-refresh-lib.mjs';
 
 const DATA = new URL('../js/data.js', import.meta.url);
 const SOURCES = JSON.parse(readFileSync(new URL('./youtube-sources.json', import.meta.url), 'utf8'));
@@ -32,15 +32,47 @@ const whyUnknown = (html) => {
   if (/confirm you.{0,10}re not a bot|unusual traffic/i.test(html)) return '자동 접속 차단';
   return '표시 없음';
 };
-const watch = async (id) => {
+const watchPage = async (id) => {
   const html = await once(`https://www.youtube.com/watch?v=${id}`);
   const live = parseLive(html);
   return { id, live, title: parseTitle(html), why: live === null ? whyUnknown(html) : null };
 };
 
+// 환경변수 YOUTUBE_API_KEY 가 있으면 유튜브 공식 API 로 확인한다(한 번에 50개, 호출 1회당 사용량 1).
+// GitHub 같은 서버에서는 유튜브가 영상 페이지를 자동 접속으로 보고 막기 때문에 공식 API 가 필요하다.
+// 키가 없으면 영상 페이지를 읽는다(내 컴퓨터에서 직접 돌릴 때).
+const API_KEY = process.env.YOUTUBE_API_KEY || '';
+const known = new Map();
+async function check(ids) {
+  const missing = [...new Set(ids)].filter((id) => !known.has(id));
+  if (API_KEY) {
+    for (let i = 0; i < missing.length; i += 50) {
+      const batch = missing.slice(i, i + 50);
+      let json = null;
+      try {
+        // 키는 주소가 아니라 헤더로 보낸다.
+        const res = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&maxResults=50&id=${batch.join(',')}`, {
+          headers: { 'X-Goog-Api-Key': API_KEY }, signal: AbortSignal.timeout(15000),
+        });
+        if (res.ok) json = await res.json();
+      } catch {
+        json = null;
+      }
+      for (const video of parseApiVideos(json, batch)) known.set(video.id, video);
+    }
+  } else {
+    for (const id of missing) known.set(id, await watchPage(id));
+  }
+  return ids.map((id) => known.get(id));
+}
+const watch = async (id) => (await check([id]))[0];
+
 const changes = [];
 const taken = RESORTS.flatMap((r) => r.cams.filter((c) => c.type === 'youtube').map((c) => c.src));
 const summary = { live: 0, unknown: 0, ended: 0, replaced: 0 };
+
+// 지금 쓰는 주소들을 먼저 한꺼번에 확인해 둔다.
+await check(RESORTS.flatMap((r) => r.cams.filter((cam) => cam.type === 'youtube' && SOURCES[`${r.id}/${cam.name}`]).map((cam) => cam.src)));
 
 for (const resort of RESORTS) {
   for (const cam of resort.cams) {
@@ -57,8 +89,7 @@ for (const resort of RESORTS) {
       ids.push(...feed.map((entry) => entry.id));
     }
     if (source.page) ids.push(...parsePageIds(await once(source.page)));
-    const candidates = [];
-    for (const id of [...new Set(ids)].filter((id) => id !== cam.src).slice(0, MAX_CANDIDATES)) candidates.push(await watch(id));
+    const candidates = await check([...new Set(ids)].filter((id) => id !== cam.src).slice(0, MAX_CANDIDATES));
 
     const next = chooseReplacement({ current: cam.src, currentLive: now.live, wantedTitle: source.title, candidates, taken });
     if (next) {
@@ -72,7 +103,7 @@ for (const resort of RESORTS) {
   }
 }
 
-console.log(JSON.stringify(summary));
+console.log(JSON.stringify({ ...summary, method: API_KEY ? '공식 API' : '영상 페이지' }));
 if (changes.length > 0 && !dry) {
   writeFileSync(DATA, applyReplacements(readFileSync(DATA, 'utf8'), changes));
 }

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { RESORTS } from '../js/data.js';
-import { normalize, titleMatches, parseLive, parseTitle, parseFeed, parsePageIds, chooseReplacement, applyReplacements } from '../scripts/youtube-refresh-lib.mjs';
+import { normalize, titleMatches, parseLive, parseTitle, parseFeed, parsePageIds, parseApiVideos, chooseReplacement, applyReplacements } from '../scripts/youtube-refresh-lib.mjs';
 
 test('제목 비교: 전각·반각·공백 차이는 무시하고, 뒤에 붙은 날짜는 허용한다', () => {
   assert.equal(normalize('ＬＩＶＥ　 Camera'), 'livecamera');
@@ -58,4 +58,16 @@ test('갱신 기준 자료는 실제 카메라와 짝이 맞는다', () => {
     if (source.channel) assert.match(source.channel, /^UC[\w-]{22}$/, key);
     if (source.page) assert.match(source.page, /^https:\/\//, key);
   }
+});
+
+test('공식 API 응답 읽기: 없는 영상은 생중계 아님, 응답이 잘못되면 모름', () => {
+  const json = { items: [
+    { id: 'aaaaaaaaaaa', snippet: { title: '베이스', liveBroadcastContent: 'live' } },
+    { id: 'bbbbbbbbbbb', snippet: { title: '정상', liveBroadcastContent: 'none' } },
+  ] };
+  assert.deepEqual(parseApiVideos(json, ['aaaaaaaaaaa', 'bbbbbbbbbbb', 'ccccccccccc']).map((v) => [v.id, v.live, v.title]), [
+    ['aaaaaaaaaaa', true, '베이스'], ['bbbbbbbbbbb', false, '정상'], ['ccccccccccc', false, null],
+  ]);
+  assert.deepEqual(parseApiVideos(null, ['aaaaaaaaaaa']).map((v) => v.live), [null]);
+  assert.deepEqual(parseApiVideos({ error: {} }, ['aaaaaaaaaaa']).map((v) => v.live), [null]);
 });

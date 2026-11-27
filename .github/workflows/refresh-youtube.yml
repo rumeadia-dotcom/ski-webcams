@@ -25,6 +25,9 @@ jobs:
         with:
           node-version: 22
       - name: 주소 확인
+        # 저장소 Secrets 의 YOUTUBE_API_KEY(유튜브 공식 API 키)를 쓴다. 없으면 확인하지 못하고 아무것도 바꾸지 않는다.
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: node scripts/refresh-youtube.mjs
       - name: 바뀐 것이 있으면 검사 후 올리기
         run: |

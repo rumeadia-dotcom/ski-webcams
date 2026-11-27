@@ -63,3 +63,15 @@ export function applyReplacements(text, changes) {
   }
   return out;
 }
+
+// 유튜브 공식 API(videos.list, part=snippet) 응답을 읽는다.
+// 응답에 없는 ID 는 지워졌거나 비공개가 된 영상이므로 생중계 아님으로 본다. 응답 자체가 잘못됐으면 모두 모름(null).
+export function parseApiVideos(json, ids) {
+  if (!json || !Array.isArray(json.items)) return ids.map((id) => ({ id, live: null, title: null, why: 'API 응답 오류' }));
+  const byId = new Map(json.items.map((item) => [item.id, item.snippet ?? {}]));
+  return ids.map((id) => {
+    const snippet = byId.get(id);
+    if (!snippet) return { id, live: false, title: null, why: null };
+    return { id, live: snippet.liveBroadcastContent === 'live', title: snippet.title ?? null, why: null };
+  });
+}
