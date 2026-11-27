@@ -111,6 +111,7 @@ const ICONS = {
   star: '<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.3 1.1 6.1L12 17.1 6.6 20l1.1-6.1L3.2 9.6l6.1-.8z"/></svg>',
   back: svg('<path d="M15 5l-7 7 7 7"/>'),
   share: svg('<path d="M12 15V3.5M8 7l4-4 4 4M6 11H5a1 1 0 0 0-1 1v7.5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V12a1 1 0 0 0-1-1h-1"/>'),
+  split: svg('<rect x="3.5" y="5" width="17" height="14" rx="1.5"/><path d="M12 5v14M3.5 12h17"/>'),
   external: svg('<path d="M14 5h5v5M19 5l-8 8M11 6H6a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-5"/>'),
 };
 const KIND_LABEL = { clear: '맑음', cloudy: '흐림', fog: '안개', rain: '비', snow: '눈', thunder: '뇌우' };
@@ -444,7 +445,9 @@ function trafficSection(resort) {
   return section;
 }
 
-const MAX_TILES = 4; // 넓은 화면에서 함께 보는 영상 수의 상한
+const MAX_TILES = 4; // 분할 보기에서 함께 보는 영상 수의 상한
+// 분할 보기(넓은 화면 전용). 기본은 꺼져 있고, 켜 두면 다른 스키장으로 옮겨도 유지된다. 새로 고치면 꺼진다.
+let splitMode = false;
 
 function directStage(resort, firstCam = 0) {
   const buttons = resort.cams.map((cam) =>
@@ -541,10 +544,27 @@ function directStage(resort, firstCam = 0) {
     layout();
   }
 
-  // 카메라 단추를 눌렀을 때. 휴대폰은 보던 영상을 바꾸고, 넓은 화면은 함께 보기에 넣거나 뺀다.
+  // 분할 보기 단추. 끄면 마지막에 고른 영상 하나만 남긴다.
+  const splitHint = h('span', { class: 'split-hint muted small' });
+  const splitButton = h('button', { class: 'btn-line split-btn', type: 'button', onclick: () => {
+    splitMode = !splitMode;
+    analytics.track('split_view', { resort_id: resort.id, on: splitMode });
+    if (!splitMode) while (tiles.length > 1) removeTile(tiles[0]);
+    paintSplit();
+  } }, icon('split', 'icon-sm'), '분할 보기');
+  function paintSplit() {
+    splitButton.classList.toggle('is-on', splitMode);
+    splitButton.setAttribute('aria-pressed', String(splitMode));
+    splitHint.textContent = splitMode
+      ? `카메라를 누르면 추가되고, 다시 누르면 꺼집니다. ${MAX_TILES}대까지 함께 볼 수 있습니다.`
+      : '켜면 카메라를 여러 대 함께 볼 수 있습니다.';
+  }
+  paintSplit();
+
+  // 카메라 단추를 눌렀을 때. 보통은 보던 영상을 바꾸고, 분할 보기에서는 함께 보기에 넣거나 뺀다.
   function select(cam) {
     userChose = true;
-    const max = isWide() ? MAX_TILES : 1;
+    const max = isWide() && splitMode ? MAX_TILES : 1;
     const shown = tiles.find((tile) => tile.cam === cam);
     if (shown && max > 1) {
       removeTile(shown);
@@ -634,9 +654,7 @@ function directStage(resort, firstCam = 0) {
     h('div', { class: 'cams' },
       h('div', { class: 'cam-group', role: 'group', 'aria-label': '카메라' }, ...buttons),
       officialLink(resort, '공식 페이지에서 보기', `cam cam-link${resort.cams.length % 2 === 0 ? ' is-wide' : ''}`)),
-    resort.cams.length > 1
-      ? h('p', { class: 'muted small multi-hint' }, `카메라를 누르면 함께 보기에 추가되고, 다시 누르면 꺼집니다. 한 번에 ${MAX_TILES}대까지 볼 수 있습니다.`)
-      : null,
+    resort.cams.length > 1 ? h('div', { class: 'split-bar' }, splitButton, splitHint) : null,
     resort.limitSec
       ? h('p', { class: 'muted small' }, `이 스키장은 공식 페이지와 같이 ${resort.limitSec}초 재생 후 정지합니다.`)
       : null,
