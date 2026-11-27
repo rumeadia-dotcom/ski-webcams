@@ -23,6 +23,7 @@ const state = {
 };
 let stopStage = null; // 지금 화면의 영상을 모두 멈추고 정리하는 함수
 let autoStart = null; // 상세 화면이 붙은 뒤 웹캠을 재생하는 함수
+let weatherLevel = 'base'; // 스키장 화면 날씨 카드에서 고른 고도: 'base' 하단 | 'top' 정상
 let currentCam = -1; // 지금 고른 카메라 순서(공유 주소에 쓴다). 없으면 -1
 const env = detectEnv(navigator.userAgent, navigator.maxTouchPoints);
 
@@ -302,10 +303,26 @@ function weatherSection(resort) {
     section.append(h('p', { class: 'muted' }, '날씨를 불러오는 중…'));
     return section;
   }
-  const w = state.weather?.[resort.id];
-  if (!w) {
+  const base = state.weather?.[resort.id];
+  if (!base) {
     section.append(weatherFailure('muted'));
     return section;
+  }
+  // 정상 지점이 있는 스키장은 하단과 정상을 골라 본다. 두 곳의 지금 기온은 단추에 함께 보인다.
+  const w = base.top && weatherLevel === 'top' ? base.top : base;
+  if (base.top) {
+    const pick = (level) => () => {
+      weatherLevel = level;
+      document.getElementById('weather-slot')?.replaceChildren(weatherSection(resort));
+      watchSnow();
+      document.querySelector(`.alt-tab[data-level="${level}"]`)?.focus({ preventScroll: true });
+    };
+    section.append(h('div', { class: 'alt-tabs', role: 'group', 'aria-label': '고도별 날씨' },
+      ...[['base', '하단', base], ['top', '정상', base.top]].map(([level, label, data]) =>
+        h('button', { class: `alt-tab${w === data ? ' is-on' : ''}`, type: 'button', 'data-level': level, 'aria-pressed': String(w === data), onclick: pick(level) },
+          h('span', { class: 'alt-name' }, label),
+          h('span', { class: 'alt-temp' }, temp(data.temp)),
+          data.alt != null ? h('span', { class: 'alt-height' }, `${data.alt.toLocaleString('ko-KR')}m`) : null))));
   }
   if (w.kind === 'snow') section.classList.add('snowfall');
   const todayIndex = w.days.findIndex((day) => day.isToday);
@@ -333,7 +350,7 @@ function weatherSection(resort) {
       w.time ? h('span', { class: 'stamp' }, `${w.time} 기준`) : null,
     ),
     days,
-    h('p', { class: 'muted small' }, 'mm 강수량 · cm 적설량. 예보 모델 값이라 스키장 발표와 다를 수 있습니다.'),
+    h('p', { class: 'muted small' }, `mm 강수량 · cm 적설량. 예보 모델 값이라 스키장 발표와 다를 수 있습니다.${base.top ? ' 하단과 정상의 기온은 각 고도에 맞춰 계산한 값입니다.' : ''}`),
   );
   // 어제부터 보이게 맞춘다. 오늘과 앞으로의 예보가 한 화면에 더 들어온다.
   requestAnimationFrame(() => {
@@ -727,6 +744,7 @@ function render() {
   redrawTopFav = null;
   autoStart = null;
   currentCam = -1;
+  weatherLevel = 'base';
   route = parseRoute(location.hash, RESORTS);
   // 넓은 화면은 목록이 늘 왼쪽에 있으므로, 첫 화면에서는 목록 맨 위 스키장을 바로 보여 준다(즐겨찾기가 있으면 그 첫째).
   if (route.view === 'list' && isWide()) {

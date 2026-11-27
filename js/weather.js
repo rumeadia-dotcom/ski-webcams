@@ -1,6 +1,6 @@
 import { RESORTS } from './data.js';
 
-const KEY = 'ski.weather.v3'; // 기간이나 스키장 목록이 바뀌면 이름을 바꿔 예전 저장본을 버린다
+const KEY = 'ski.weather.v4'; // 기간이나 스키장 목록이 바뀌면 이름을 바꿔 예전 저장본을 버린다
 const TTL_MS = 30 * 60 * 1000;
 const TIMEOUT_MS = 8000; // 응답이 멈춘 채 끝나지 않는 연결을 끊는 시간
 const TODAY_INDEX = 3; // past_days=3 이므로 보통 네 번째 날이 오늘. 응답에 현재 시각이 없을 때만 쓴다
@@ -19,10 +19,19 @@ export function weatherKind(code) {
   return 'cloudy';
 }
 
+// 날씨를 받는 지점들. 앞쪽은 스키장마다 하나씩(하단, 따로 없으면 기본 좌표)이고, 뒤쪽은 정상 지점이 있는 스키장의 정상이다.
+// 스키장 순서를 앞에 그대로 두어, 정상 지점이 생기기 전 화면 코드가 받아도 스키장과 날씨가 어긋나지 않는다.
+export function weatherPoints(resorts) {
+  const bases = resorts.map((r) => ({ id: r.id, level: 'base', lat: r.base?.lat ?? r.lat, lon: r.base?.lon ?? r.lon }));
+  const tops = resorts.filter((r) => r.top).map((r) => ({ id: r.id, level: 'top', lat: r.top.lat, lon: r.top.lon }));
+  return [...bases, ...tops];
+}
+
 export function buildWeatherUrl(resorts) {
+  const points = weatherPoints(resorts);
   const params = new URLSearchParams({
-    latitude: resorts.map((r) => r.lat).join(','),
-    longitude: resorts.map((r) => r.lon).join(','),
+    latitude: points.map((p) => p.lat).join(','),
+    longitude: points.map((p) => p.lon).join(','),
     current: 'temperature_2m,precipitation,rain,snowfall,weather_code',
     daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum',
     past_days: '3',
@@ -39,6 +48,7 @@ function parseLocation(loc) {
   const nowDate = typeof current.time === 'string' ? current.time.slice(0, 10) : null;
   const todayIndex = daily.time.includes(nowDate) ? daily.time.indexOf(nowDate) : TODAY_INDEX;
   return {
+    alt: typeof loc.elevation === 'number' ? Math.round(loc.elevation) : null, // 이 지점의 고도(m). 기온은 이 고도에 맞춰 계산된 값이다
     at: typeof current.time === 'string' ? current.time : null, // 관측 기준 시각 'YYYY-MM-DDTHH:MM' (한국 시간)
     temp: current.temperature_2m,
     precip: current.precipitation,
@@ -91,9 +101,11 @@ export function boardWeather(w, labels) {
 export function parseWeather(json, resorts) {
   const list = Array.isArray(json) ? json : [json];
   const result = {};
-  resorts.forEach((resort, i) => {
+  weatherPoints(resorts).forEach((point, i) => {
     const parsed = parseLocation(list[i]);
-    if (parsed) result[resort.id] = parsed;
+    if (!parsed) return;
+    if (point.level === 'base') result[point.id] = parsed;
+    else if (result[point.id]) result[point.id].top = parsed; // 정상 날씨는 그 스키장 날씨 안에 넣는다
   });
   return result;
 }
@@ -141,7 +153,7 @@ function isStale(data, now) {
 // 저장해 둔 날씨를 자정 넘어 꺼내면 오늘 표시가 어제에 남는다. 지금 날짜가 목록에 있으면 그 날로 옮긴다.
 function markToday(data, now) {
   const today = seoulDate(now);
-  for (const w of Object.values(data)) {
+  for (const w of Object.values(data).flatMap((base) => [base, base.top]).filter((x) => x && Array.isArray(x.days))) {
     if (!w.days.some((d) => d.date === today)) continue;
     w.days = w.days.map((d) => ({ ...d, isToday: d.date === today }));
   }

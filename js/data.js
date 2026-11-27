@@ -2,6 +2,7 @@
 // mode: 'direct' 사이트 안에서 재생 / 'official' 공식 웹캠 페이지를 새 탭으로 / 'none' 웹캠 없음
 // 좌표 출처: OpenStreetMap Nominatim 검색 결과 (날씨 조회용)
 // 이 파일에는 IP 주소와 토큰이 든 주소를 적지 않는다.
+// base·top: 날씨를 하단과 정상으로 나눠 받는 지점(2026-11-27, 좌표는 공개 저장소 hletrd/slopes 의 스키하우스·정상 지점). 없으면 lat·lon 한 곳만 쓴다.
 // 일본 스키장(country: 'jp')은 2026-11-27 추가. 카메라 목록은 공개 저장소 hletrd/slopes(Apache-2.0)를 참고했고,
 // 유튜브 중계가 살아 있는지는 유튜브 공개 조회로 확인했다. 유튜브 중계는 다시 시작하면 주소(영상 ID)가 바뀐다.
 // 그때는 화면의 공식 페이지 버튼으로 볼 수 있고, 여기 ID 를 새로 적어야 한다.
@@ -22,6 +23,8 @@ export const RESORTS = [
     name: '모나용평',
     lat: 37.6282,
     lon: 128.6777,
+    base: { lat: 37.64447, lon: 128.67993 }, // 스키하우스
+    top: { lat: 37.61141, lon: 128.67158 }, // 레인보우 정상
     drive: { lat: 37.64433, lon: 128.67927 }, // 차로 도착하는 지점: 드래곤프라자
     mode: 'direct',
     officialUrl: 'https://www.yongpyong.co.kr/kor/guide/realTimeNews/ypResortWebcam.do',
@@ -46,6 +49,8 @@ export const RESORTS = [
     name: '휘닉스파크',
     lat: 37.5786,
     lon: 128.3164,
+    base: { lat: 37.5833, lon: 128.32511 }, // 스키하우스
+    top: { lat: 37.57409, lon: 128.31013 }, // 몽블랑 정상
     drive: { lat: 37.58088, lon: 128.32766 }, // 차로 도착하는 지점: 리조트 입구(태기로)
     mode: 'direct',
     officialUrl: 'https://phoenixhnr.co.kr/page/pyeongchang/guide/operation/sketchMovie',
@@ -64,6 +69,8 @@ export const RESORTS = [
     name: '웰리힐리파크',
     lat: 37.4852,
     lon: 128.2459,
+    base: { lat: 37.4905, lon: 128.24957 }, // 스키하우스
+    top: { lat: 37.48018, lon: 128.24363 }, // 정상
     mode: 'direct',
     officialUrl: 'https://www.wellihillipark.com/home/customer/webcam',
     officialUrlMobile: 'https://m.wellihillipark.com/customer/webcam', // PC 주소는 휴대폰에서 모바일 홈으로 넘어간다
@@ -81,6 +88,8 @@ export const RESORTS = [
     name: '지산포레스트',
     lat: 37.2137,
     lon: 127.341,
+    base: { lat: 37.21722, lon: 127.3449 }, // 스키하우스
+    top: { lat: 37.21146, lon: 127.33968 }, // 블루 정상
     mode: 'direct',
     limitSec: 30,
     officialUrl: 'https://www.jisanresort.co.kr/w/ski/slopes/webcam.asp',
@@ -97,6 +106,8 @@ export const RESORTS = [
     name: '알펜시아',
     lat: 37.6581,
     lon: 128.6695,
+    base: { lat: 37.65695, lon: 128.67235 }, // 스키하우스
+    top: { lat: 37.65004, lon: 128.67334 }, // 정상
     mode: 'direct',
     officialUrl: 'https://www.alpensia.com/guide/web-cam.do',
     cams: [yt('알펜시아 실시간', 'Aqlk0xGVoBw')],
@@ -106,6 +117,8 @@ export const RESORTS = [
     name: '오크밸리',
     lat: 37.4022,
     lon: 127.8191,
+    base: { lat: 37.40749, lon: 127.80796 }, // 스키하우스
+    top: { lat: 37.40234, lon: 127.81906 }, // 정상
     drive: { lat: 37.41037, lon: 127.81951 }, // 차로 도착하는 지점: 오크밸리2길
     mode: 'direct',
     officialUrl: 'https://oakvalley.co.kr/ski/introduction/realtime',
@@ -122,6 +135,8 @@ export const RESORTS = [
     name: '곤지암',
     lat: 37.3346,
     lon: 127.2875,
+    base: { lat: 37.33693, lon: 127.29351 }, // 스키하우스
+    top: { lat: 37.32892, lon: 127.28119 }, // 정상
     mode: 'official',
     camCount: 5,
     officialUrl: 'https://www.konjiamresort.co.kr/ski/liveCam.dev',
@@ -133,6 +148,8 @@ export const RESORTS = [
     name: '하이원',
     lat: 37.1939,
     lon: 128.8294,
+    base: { lat: 37.2079, lon: 128.82583 }, // 스키하우스
+    top: { lat: 37.17838, lon: 128.83005 }, // 밸리탑
     drive: { lat: 37.2117, lon: 128.82125 }, // 차로 도착하는 지점: 하이원길
     mode: 'official',
     camCount: 18,
@@ -144,6 +161,8 @@ export const RESORTS = [
     name: '무주덕유산',
     lat: 35.8905,
     lon: 127.7368,
+    base: { lat: 35.89072, lon: 127.73687 }, // 스키하우스
+    top: { lat: 35.86457, lon: 127.74448 }, // 설천봉 정상
     mode: 'official',
     camCount: 11,
     officialUrl: 'https://www.mdysresort.com/guide/webcam.asp',
@@ -155,6 +174,8 @@ export const RESORTS = [
     name: '오투리조트',
     lat: 37.1735,
     lon: 128.9383,
+    base: { lat: 37.17741, lon: 128.94776 }, // 스키하우스
+    top: { lat: 37.16762, lon: 128.92693 }, // 으뜸마루
     drive: { lat: 37.170188, lon: 128.945948 }, // 차로 도착하는 지점: 슬로프 아래 도로
     mode: 'official',
     camCount: 8,
@@ -166,6 +187,8 @@ export const RESORTS = [
     name: '엘리시안 강촌',
     lat: 37.8167,
     lon: 127.5871,
+    base: { lat: 37.82027, lon: 127.59007 }, // 스키하우스
+    top: { lat: 37.81525, lon: 127.58271 }, // 정상
     mode: 'official',
     camCount: 6,
     officialUrl: 'https://www.elysian.co.kr/about-gangchon/ski',
@@ -176,6 +199,8 @@ export const RESORTS = [
     name: '비발디파크',
     lat: 37.6418,
     lon: 127.6875,
+    base: { lat: 37.64481, lon: 127.68212 }, // 스키하우스
+    top: { lat: 37.63745, lon: 127.69001 }, // 정상
     drive: { lat: 37.64612, lon: 127.68103 }, // 차로 도착하는 지점: 소노벨 비발디파크
     mode: 'official',
     camCount: 7,
@@ -187,6 +212,8 @@ export const RESORTS = [
     name: '에덴밸리',
     lat: 35.429,
     lon: 128.9859,
+    base: { lat: 35.42875, lon: 128.98446 }, // 스키하우스
+    top: { lat: 35.41948, lon: 128.98322 }, // 정상
     mode: 'none',
     officialUrl: 'https://www.edenvalley.co.kr/main.asp',
     cams: [],

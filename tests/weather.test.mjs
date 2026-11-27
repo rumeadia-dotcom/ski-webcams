@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { weatherKind, buildWeatherUrl, parseWeather, getWeather } from '../js/weather.js';
+import { weatherKind, buildWeatherUrl, parseWeather, getWeather, weatherPoints } from '../js/weather.js';
 import { RESORTS } from '../js/data.js';
 
 const two = [
@@ -37,11 +37,11 @@ test('날씨 코드 분류', () => {
   assert.equal(weatherKind(undefined), 'cloudy');
 });
 
-test('호출 주소에 필수 조건과 좌표가 스키장 수만큼이 들어간다', () => {
+test('호출 주소에 필수 조건과 좌표가 날씨 지점 수만큼이 들어간다', () => {
   const url = new URL(buildWeatherUrl(RESORTS));
   assert.equal(url.origin + url.pathname, 'https://api.open-meteo.com/v1/forecast');
-  assert.equal(url.searchParams.get('latitude').split(',').length, RESORTS.length);
-  assert.equal(url.searchParams.get('longitude').split(',').length, RESORTS.length);
+  assert.equal(url.searchParams.get('latitude').split(',').length, weatherPoints(RESORTS).length);
+  assert.equal(url.searchParams.get('longitude').split(',').length, weatherPoints(RESORTS).length);
   assert.equal(url.searchParams.get('past_days'), '3');
   assert.equal(url.searchParams.get('forecast_days'), '8'); // 오늘 + 앞으로 7일
   assert.equal(url.searchParams.get('timezone'), 'Asia/Seoul');
@@ -97,7 +97,7 @@ test('저장소가 막혀 있거나 캐시가 깨져도 동작', async () => {
   const body = [location(1, 0), location(2, 0)];
   const w = await getWeather({ fetch: okFetch(body), storage: throwing, now: () => 1, resorts: two });
   assert.equal(w.b.temp, 2);
-  const broken = memoryStorage({ 'ski.weather.v3': '{nope' });
+  const broken = memoryStorage({ 'ski.weather.v4': '{nope' });
   const w2 = await getWeather({ fetch: okFetch(body), storage: broken, now: () => 1, resorts: two });
   assert.equal(w2.a.temp, 1);
 });
@@ -118,10 +118,10 @@ test('저장소 접근 자체가 예외를 던지는 환경에서도 날씨를 �
 test('형태가 맞지 않거나 미래 시각인 캐시는 버린다', async () => {
   const body = [location(1, 0), location(2, 0)];
   const counter = { n: 0 };
-  const bad = memoryStorage({ 'ski.weather.v3': JSON.stringify({ at: 1000, data: { a: {} } }) });
+  const bad = memoryStorage({ 'ski.weather.v4': JSON.stringify({ at: 1000, data: { a: {} } }) });
   const w = await getWeather({ fetch: okFetch(body, counter), storage: bad, now: () => 1000, resorts: two });
   assert.equal(w.a.temp, 1);
-  const future = memoryStorage({ 'ski.weather.v3': JSON.stringify({ at: 9_999_999, data: w }) });
+  const future = memoryStorage({ 'ski.weather.v4': JSON.stringify({ at: 9_999_999, data: w }) });
   await getWeather({ fetch: okFetch(body, counter), storage: future, now: () => 1000, resorts: two });
   assert.equal(counter.n, 2);
 });
@@ -262,4 +262,32 @@ test('저장해 둔 날씨를 자정 넘어 꺼내면 오늘 표시를 새 날�
   const after = Date.parse('2026-11-18T00:10:00+09:00');
   const second = await getWeather({ fetch: okFetch(body), storage, now: () => after, resorts: two });
   assert.equal(second.a.days.find((d) => d.isToday).date, '2026-11-18');
+});
+
+test('정상 지점이 있는 스키장은 하단과 정상 날씨를 따로 받는다', () => {
+  const resorts = [
+    { id: 'a', lat: 1, lon: 2, base: { lat: 10, lon: 20 }, top: { lat: 11, lon: 21 } },
+    { id: 'b', lat: 3, lon: 4 },
+  ];
+  // 스키장 순서가 앞에 그대로 오고, 정상 지점은 뒤에 붙는다.
+  assert.deepEqual(weatherPoints(resorts).map((p) => [p.id, p.level, p.lat, p.lon]), [
+    ['a', 'base', 10, 20], ['b', 'base', 3, 4], ['a', 'top', 11, 21],
+  ]);
+  const url = new URL(buildWeatherUrl(resorts));
+  assert.equal(url.searchParams.get('latitude'), '10,3,11');
+  const loc = (elevation, temperature) => ({
+    elevation,
+    current: { time: '2026-11-27T13:00', temperature_2m: temperature, precipitation: 0, weather_code: 3 },
+    daily: { time: ['2026-11-27'], weather_code: [3], temperature_2m_max: [temperature], temperature_2m_min: [temperature - 5], precipitation_sum: [0], snowfall_sum: [0] },
+  });
+  const w = parseWeather([loc(758, 10), loc(120, 14), loc(1412, 5.9)], resorts);
+  assert.equal(w.a.temp, 10);
+  assert.equal(w.a.alt, 758);
+  assert.equal(w.a.top.temp, 5.9);
+  assert.equal(w.a.top.alt, 1412);
+  assert.equal(w.a.top.days[0].isToday, true);
+  assert.equal(w.b.temp, 14);
+  assert.equal(w.b.top, undefined);
+  // 정상 응답만 빠져도 하단 날씨는 그대로 쓴다.
+  assert.equal(parseWeather([loc(758, 10), loc(120, 14)], resorts).a.top, undefined);
 });

@@ -100,3 +100,14 @@ test('휴대폰에서는 모바일 전용 공식 페이지가 있으면 그 주�
   assert.equal(officialUrlFor(byId.welli, 'windows'), byId.welli.officialUrl);
   for (const r of RESORTS) if (r.officialUrlMobile) assert.match(r.officialUrlMobile, /^https:\/\//, r.id);
 });
+
+test('국내 스키장은 하단과 정상 날씨 지점을 가진다', () => {
+  for (const r of RESORTS.filter((x) => x.country !== 'jp')) {
+    for (const point of [r.base, r.top]) {
+      assert.ok(point, r.id);
+      assert.ok(point.lat > 33 && point.lat < 39 && point.lon > 124 && point.lon < 131, r.id);
+      // 스키장 기본 좌표에서 멀리 벗어나지 않는다(약 6km 이내).
+      assert.ok(Math.abs(point.lat - r.lat) < 0.06 && Math.abs(point.lon - r.lon) < 0.06, r.id);
+    }
+  }
+});

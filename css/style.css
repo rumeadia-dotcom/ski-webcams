@@ -258,6 +258,27 @@ a { text-underline-offset: 3px; }
   pointer-events: none;
 }
 .stages[data-count="1"] .stage-label { display: none; }
+/* 날씨 카드의 하단·정상 고르기 */
+.alt-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+.alt-tab {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-height: var(--tap);
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.12s ease-out;
+}
+.alt-tab.is-on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.alt-name { color: var(--muted); font-size: var(--fs-label); }
+.alt-tab.is-on .alt-name { color: var(--accent); font-weight: 600; }
+.alt-temp { font-size: var(--fs-item); font-weight: 600; font-variant-numeric: tabular-nums; }
+.alt-height { margin-left: auto; color: var(--muted); font-size: var(--fs-meta); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
 /* 분할 보기 스위치와 안내. 넓은 화면에서만 나온다 */
 .split-bar { display: none; align-items: center; gap: 4px 16px; flex-wrap: wrap; }
 .switch {
@@ -556,7 +577,7 @@ a { text-underline-offset: 3px; }
 .board-part:active { opacity: 0.7; }
 .icon-btn, .back { border-radius: 12px; }
 @media (hover: hover) {
-  .row-link:hover, .side-brand:hover, .fav:hover, .cam:hover, .route:hover, .btn-line:hover, .icon-btn:hover, .back:hover {
+  .row-link:hover, .side-brand:hover, .alt-tab:hover, .fav:hover, .cam:hover, .route:hover, .btn-line:hover, .icon-btn:hover, .back:hover {
     background-color: color-mix(in srgb, var(--accent) 6%, transparent);
   }
   .btn:hover { filter: brightness(1.06); }
