@@ -122,6 +122,12 @@ a { text-underline-offset: 3px; }
 .mood-word { font-weight: 600; }
 .mood-word.is-cold { color: var(--snow); }
 .mood-word.is-hot { color: var(--sun); }
+/* 휴대폰 목록 화면 머리. 그림 때문에 키가 커서 위에 붙여 두지 않는다 */
+.top-home { position: static; align-items: center; gap: 0; margin-bottom: 12px; padding-top: calc(env(safe-area-inset-top) + 8px); }
+.top-home h1 { flex: 0 1 auto; }
+.top-home .mood { flex: none; flex-direction: row-reverse; gap: 8px; margin: 0 0 0 auto; }
+.top-home .mood-img { height: 80px; }
+.top-home .mood-text { align-items: flex-end; text-align: right; }
 
 /* 지금 눈이 오는 곳에만: 조용히 내리는 눈. 내용 뒤에 깔리고 누르는 데 방해되지 않는다. */
 .snowfall { position: relative; overflow: hidden; isolation: isolate; }

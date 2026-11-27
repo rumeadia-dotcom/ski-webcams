@@ -290,11 +290,12 @@ function drawSide() {
 function renderList() {
   document.title = 'J·J 웹캠';
   mount(
-    h('header', { class: 'top' },
+    // 휴대폰 목록 화면 머리: 이름 바로 옆에 공유 단추, 오른쪽 위에 평균 기온 문구와 그림.
+    h('header', { class: 'top top-home' },
       h('h1', { class: 'brand', tabindex: '-1' }, 'J·J 웹캠'),
-      h('span', { class: 'top-actions' }, shareButton(null)),
+      shareButton(null),
+      moodBanner(),
     ),
-    moodBanner(),
     state.weather === null ? weatherFailure('notice') : null,
     h('main', {}, resortList(renderList)),
     footer(),
