@@ -25,9 +25,17 @@ const once = (url) => {
   if (!cache.has(url)) cache.set(url, get(url));
   return cache.get(url);
 };
+// 생중계 표시를 못 읽었을 때 그 까닭을 짧게 남긴다.
+const whyUnknown = (html) => {
+  if (html === null) return '응답 없음';
+  if (/consent\.youtube\.com|consent\.google\.com/.test(html)) return '동의 화면';
+  if (/confirm you.{0,10}re not a bot|unusual traffic/i.test(html)) return '자동 접속 차단';
+  return '표시 없음';
+};
 const watch = async (id) => {
   const html = await once(`https://www.youtube.com/watch?v=${id}`);
-  return { id, live: parseLive(html), title: parseTitle(html) };
+  const live = parseLive(html);
+  return { id, live, title: parseTitle(html), why: live === null ? whyUnknown(html) : null };
 };
 
 const changes = [];
@@ -40,7 +48,7 @@ for (const resort of RESORTS) {
     if (cam.type !== 'youtube' || !source) continue;
     const now = await watch(cam.src);
     if (now.live === true) { summary.live += 1; continue; }
-    if (now.live === null) { summary.unknown += 1; console.log(`확인 못 함: ${resort.id}/${cam.name}`); continue; }
+    if (now.live === null) { summary.unknown += 1; console.log(`확인 못 함(${now.why}): ${resort.id}/${cam.name}`); continue; }
     summary.ended += 1;
 
     const ids = [];
