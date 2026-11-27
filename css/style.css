@@ -623,6 +623,7 @@ a { text-underline-offset: 3px; }
     height: 100vh;
     height: 100dvh;
     padding-bottom: 24px;
+    overflow-x: hidden; /* 목록은 위아래로만 스크롤된다 */
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
@@ -641,8 +642,7 @@ a { text-underline-offset: 3px; }
   .side .mood { margin: 4px 0 12px; }
   .side-brand {
     display: flex;
-    margin-left: -8px;
-    padding: 4px 8px;
+    padding: 4px 8px 4px 0;
     border-radius: 12px;
     align-items: center;
     gap: 8px;
@@ -652,7 +652,6 @@ a { text-underline-offset: 3px; }
     letter-spacing: -0.015em;
     text-decoration: none;
   }
-  .side-head .icon-btn { margin-right: -12px; }
   .row.is-current { background: var(--today); }
   .row.is-current .row-name { color: var(--accent); }
 
