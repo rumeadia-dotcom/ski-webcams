@@ -1,0 +1,43 @@
+# 유튜브 생중계 주소 자동 갱신.
+# 3시간마다 카메라의 유튜브 주소가 아직 생중계 중인지 확인하고, 끝난 것은 새 생중계 주소로 바꿔 main 에 커밋한다.
+# main 에 올라가면 Vercel 이 자동으로 배포한다. 바뀐 것이 없으면 아무것도 올리지 않는다.
+name: 유튜브 주소 갱신
+
+on:
+  schedule:
+    - cron: '17 */3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-youtube
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 주소 확인
+        run: node scripts/refresh-youtube.mjs
+      - name: 바뀐 것이 있으면 검사 후 올리기
+        run: |
+          if git diff --quiet -- js/data.js; then
+            echo "바뀐 주소 없음"
+            exit 0
+          fi
+          npm ci
+          npm test
+          npm run build
+          # 저장소의 기존 작성자 이름으로 커밋한다.
+          git config user.name "$(git log -1 --format=%an)"
+          git config user.email "$(git log -1 --format=%ae)"
+          git add js/data.js
+          git commit -m "유튜브 생중계 주소 자동 갱신"
+          git push

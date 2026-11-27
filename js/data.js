@@ -8,6 +8,7 @@
 
 const hls = (name, src) => ({ name, type: 'hls', src });
 const yt = (name, src) => ({ name, type: 'youtube', src });
+const embed = (name, src) => ({ name, type: 'embed', src });
 
 const yongpyong = (cam) => `https://live.yongpyong.co.kr/${cam}/index.m3u8`;
 const phoenix = (id) => `https://streaming.phoenixhnr.co.kr/hls/${id}.m3u8`;
@@ -227,6 +228,21 @@ export const RESORTS = [
       yt('아사리 정상', 'qtU23CdE7mU'),
       yt('나가미네 제2구역', 'RVblxnP4Ry8'),
       yt('24시간 적설계', 'Y3bXHw8TA2o'),
+    ],
+  },
+  {
+    id: 'furano',
+    name: '후라노',
+    country: 'jp',
+    area: '홋카이도',
+    lat: 43.3326,
+    lon: 142.3281,
+    mode: 'direct',
+    officialUrl: 'https://www.princehotels.co.jp/ski/furano/livecamera/',
+    // 공식 페이지가 끼워 넣어 보여 주는 화면(SKIDAY)을 같은 주소로 끼워 넣는다. 유튜브가 아니라 자동 갱신 대상이 아니다.
+    cams: [
+      embed('로프웨이 정상', 'https://skiday.app/qjjomrGpZ2icbbkYBQxh/865036042047983/embed'),
+      embed('로프웨이 정상 적설계', 'https://skiday.app/qjjomrGpZ2icbbkYBQxh/869223040349118/embed'),
     ],
   },
   {

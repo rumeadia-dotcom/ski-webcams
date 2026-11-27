@@ -8,10 +8,10 @@ const byId = Object.fromEntries(RESORTS.map((r) => [r.id, r]));
 const KR = RESORTS.filter((r) => r.country !== 'jp');
 const JP = RESORTS.filter((r) => r.country === 'jp');
 
-test('국내 13곳 + 일본 12곳, id 중복 없음', () => {
+test('국내 13곳 + 일본 13곳, id 중복 없음', () => {
   assert.equal(KR.length, 13);
-  assert.equal(JP.length, 12);
-  assert.equal(new Set(RESORTS.map((r) => r.id)).size, 25);
+  assert.equal(JP.length, 13);
+  assert.equal(new Set(RESORTS.map((r) => r.id)).size, 26);
 });
 
 test('일본 스키장: 국내 뒤에 모여 있고, 유튜브 카메라와 지역 이름을 가진다', () => {
@@ -25,6 +25,10 @@ test('일본 스키장: 국내 뒤에 모여 있고, 유튜브 카메라와 지�
     assert.ok(r.lat > 30 && r.lat < 46 && r.lon > 129 && r.lon < 146, r.id);
     for (const cam of r.cams) {
       assert.ok(cam.name, r.id);
+      if (cam.type === 'embed') {
+        assert.match(cam.src, /^https:\/\/skiday\.app\/[\w/]+\/embed$/, r.id); // 끼워 넣기는 확인한 운영사 주소만
+        continue;
+      }
       assert.equal(cam.type, 'youtube', r.id);
       assert.match(cam.src, /^[\w-]{11}$/, r.id);
       assert.ok(!ids.has(cam.src), `${r.id} ${cam.src} 중복`);

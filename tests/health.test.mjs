@@ -64,3 +64,10 @@ test('decideStart: 모두 꺼졌다고 확인되면 allOff', () => {
   const [a, b] = [{ name: 'a' }, { name: 'b' }];
   assert.deepEqual(decideStart([a, b], new Map([[a, 'off'], [b, 'off']]), a), { action: 'allOff' });
 });
+
+test('끼워 넣기 화면은 미리 확인하지 않는다', async () => {
+  let called = 0;
+  const state = await checkCam({ name: '끼움', type: 'embed', src: 'https://example.test/embed' }, { fetchFn: async () => { called += 1; } });
+  assert.equal(state, 'unknown');
+  assert.equal(called, 0);
+});

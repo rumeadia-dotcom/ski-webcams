@@ -54,7 +54,7 @@ test('배포용 빌드', async (t) => {
 
   await t.test('스키장마다 공유 미리보기 페이지가 있고 미리보기 그림이 실제로 있다', () => {
     const pages = readdirSync(path.join(dist, 'r'));
-    assert.equal(pages.length, 25);
+    assert.equal(pages.length, 26);
     const page = readFileSync(path.join(dist, 'r', 'yongpyong.html'), 'utf8');
     assert.match(page, /og:title" content="[^"]*용평[^"]*"/);
     assert.match(page, /#\/resort\/yongpyong/);

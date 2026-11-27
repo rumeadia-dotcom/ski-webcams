@@ -75,9 +75,10 @@ export function createPlayer(container, { onState, preferNative = false }) {
     };
     progress();
 
-    if (cam.type === 'youtube') {
+    // 'embed' 는 운영사가 공식 페이지에 끼워 넣으라고 내준 화면 주소를 그대로 쓴다.
+    if (cam.type === 'youtube' || cam.type === 'embed') {
       const iframe = document.createElement('iframe');
-      iframe.src = youtubeEmbedUrl(cam.src);
+      iframe.src = cam.type === 'youtube' ? youtubeEmbedUrl(cam.src) : cam.src;
       iframe.title = cam.name;
       iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
       iframe.allowFullscreen = true;

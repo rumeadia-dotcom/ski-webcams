@@ -3,7 +3,7 @@
 //   'off'     서버가 없다고 답했거나 연결하지 못했다
 //   'unknown' 확인할 수 없는 종류이거나 시간 안에 답이 없다(재생은 시도한다)
 export async function checkCam(cam, { fetchFn = globalThis.fetch, timeoutMs = 4000 } = {}) {
-  if (cam.type === 'youtube' || typeof fetchFn !== 'function') return 'unknown';
+  if (cam.type !== 'hls' || typeof fetchFn !== 'function') return 'unknown';
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
