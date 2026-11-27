@@ -21,7 +21,7 @@ const state = {
   favorites: loadFavorites(storage),
   weather: undefined, // undefined 불러오는 중 / null 실패 / 객체 성공
 };
-let player = null;
+let stopStage = null; // 지금 화면의 영상을 모두 멈추고 정리하는 함수
 let autoStart = null; // 상세 화면이 붙은 뒤 웹캠을 재생하는 함수
 let currentCam = -1; // 지금 고른 카메라 순서(공유 주소에 쓴다). 없으면 -1
 const env = detectEnv(navigator.userAgent, navigator.maxTouchPoints);
@@ -49,8 +49,31 @@ function h(tag, attrs = {}, ...children) {
   return el;
 }
 
+// 넓은 화면(PC)에서는 왼쪽에 스키장 목록을 늘 두고, 오른쪽에 화면 내용을 그린다.
+const wideQuery = window.matchMedia('(min-width: 1100px)');
+const isWide = () => wideQuery.matches;
+let side = null; // 넓은 화면의 왼쪽 목록
+let redrawTopFav = null; // 스키장 화면 제목 옆 즐겨찾기 단추를 다시 그리는 함수
+
 // 비어 있는 자리(null)는 건너뛰고 화면을 바꾼다.
-const mount = (...nodes) => app.replaceChildren(...nodes.filter(Boolean));
+function mount(...nodes) {
+  const page = nodes.filter(Boolean);
+  app.classList.toggle('is-wide', isWide());
+  if (!isWide()) {
+    side = null;
+    app.replaceChildren(...page);
+    return;
+  }
+  const pageEl = h('div', { class: 'page' }, ...page);
+  const old = app.querySelector(':scope > .page');
+  // 목록은 그대로 두고 내용만 바꾼다. 목록을 스크롤한 자리가 유지된다.
+  if (side?.parentNode === app && old) old.replaceWith(pageEl);
+  else {
+    side = h('aside', { class: 'side', 'aria-label': '스키장 목록' });
+    app.replaceChildren(side, pageEl);
+  }
+  drawSide();
+}
 
 // 날씨를 불러오지 못했을 때의 안내. 원인을 함께 보여 준다.
 function weatherFailure(cls) {
@@ -218,17 +241,17 @@ function listWeather(resort) {
   );
 }
 
-function renderList() {
-  document.title = '스키장 웹캠';
+// 스키장 목록. onFav: 즐겨찾기를 바꾼 뒤 다시 그리는 함수. activeId: 지금 보고 있는 스키장
+function resortList(onFav, activeId = null) {
   const favCount = RESORTS.filter((r) => state.favorites.includes(r.id)).length;
   const sorted = sortResorts(RESORTS, state.favorites);
   // 즐겨찾기 아래에서 일본 스키장이 시작되는 자리에 구분 제목을 넣는다.
   const japanStart = sorted.findIndex((resort, i) => i >= favCount && isJapan(resort));
   const rows = sorted.flatMap((resort, i) => [
     i === japanStart ? h('li', { class: 'row-group' }, h('h2', { class: 'row-group-title' }, '일본')) : null,
-    h('li', { class: `row${favCount > 0 && i === favCount ? ' is-rest-start' : ''}${state.weather?.[resort.id]?.kind === 'snow' ? ' snowfall' : ''}` },
-      favButton(resort, renderList),
-      h('a', { class: 'row-link', href: `#/resort/${resort.id}` },
+    h('li', { class: `row${favCount > 0 && i === favCount ? ' is-rest-start' : ''}${state.weather?.[resort.id]?.kind === 'snow' ? ' snowfall' : ''}${resort.id === activeId ? ' is-current' : ''}` },
+      favButton(resort, onFav),
+      h('a', { class: 'row-link', href: `#/resort/${resort.id}`, 'aria-current': resort.id === activeId ? 'page' : null },
         h('span', { class: 'row-text' },
           h('span', { class: 'row-name' }, resort.name),
           camSummary(resort),
@@ -237,6 +260,55 @@ function renderList() {
       ),
     ),
   ]).filter(Boolean);
+  return h('ul', { class: 'list' }, ...rows);
+}
+
+// 넓은 화면의 왼쪽 목록을 다시 그린다.
+function drawSide() {
+  if (!side?.isConnected) return;
+  const y = side.scrollTop;
+  side.replaceChildren(
+    h('div', { class: 'side-head' },
+      h('a', { class: 'side-brand', href: '#/' }, '스키장 웹캠',
+        h('img', { class: 'app-icon', src: ICON_URL, alt: '', width: '144', height: '144' })),
+      shareButton(null),
+    ),
+    resortList(() => { drawSide(); redrawTopFav?.(); watchSnow(); }, route.view === 'detail' ? route.resort.id : null),
+  );
+  side.scrollTop = y;
+}
+
+// 넓은 화면의 첫 화면: 목록은 왼쪽에 있으므로 오른쪽에는 안내와 눈 소식을 둔다.
+function welcome() {
+  const snowy = RESORTS
+    .map((resort) => ({ resort, note: weatherNote(state.weather?.[resort.id]) }))
+    .filter(({ note }) => note?.kind === 'snow');
+  return h('main', { class: 'welcome' },
+    h('h1', { tabindex: '-1' }, '어느 스키장을 볼까요?'),
+    h('p', { class: 'welcome-lead' }, '왼쪽 목록에서 스키장을 고르면 실시간 웹캠과 날씨가 나옵니다. 카메라는 한 번에 4대까지 함께 볼 수 있습니다.'),
+    snowy.length > 0
+      ? h('section', { class: 'welcome-snow', 'aria-label': '눈 소식' },
+          h('h2', {}, '눈 소식'),
+          h('ul', {}, ...snowy.map(({ resort, note }) =>
+            h('li', {}, h('a', { href: `#/resort/${resort.id}` },
+              h('span', { class: 'welcome-name' }, resort.name),
+              h('span', { class: 'kind-snow' }, note.text))))))
+      : null,
+  );
+}
+
+function renderList() {
+  document.title = '스키장 웹캠';
+  if (isWide()) {
+    mount(
+      h('div', { class: 'ridge', html: RIDGE }),
+      state.weather === null ? weatherFailure('notice') : null,
+      welcome(),
+      footer(),
+    );
+    watchSnow();
+    return;
+  }
   mount(
     h('header', { class: 'top' },
       h('h1', { class: 'brand', tabindex: '-1' }, '스키장 웹캠',
@@ -245,7 +317,7 @@ function renderList() {
     ),
     h('div', { class: 'ridge', html: RIDGE }),
     state.weather === null ? weatherFailure('notice') : null,
-    h('main', {}, h('ul', { class: 'list' }, ...rows)),
+    h('main', {}, resortList(renderList)),
     footer(),
   );
   watchSnow();
@@ -402,59 +474,32 @@ function trafficSection(resort) {
   return section;
 }
 
+const MAX_TILES = 4; // 넓은 화면에서 함께 보는 영상 수의 상한
+
 function directStage(resort, firstCam = 0) {
-  const media = h('div', { class: 'media' });
-  const overlay = h('div', { class: 'overlay', role: 'status' });
   const buttons = resort.cams.map((cam) =>
-    h('button', { class: 'cam', type: 'button', onclick: () => start(cam) }, cam.name, h('span', { class: 'sr-only' })));
+    h('button', { class: 'cam', type: 'button', onclick: () => select(cam) }, cam.name, h('span', { class: 'sr-only' })));
   const off = new Set(); // 이번 화면에서 송출이 없다고 확인된 카메라
-  let current = null;
-  let startedAuto = false;
-  let isPlaying = false;
+  const tiles = []; // 지금 띄운 영상들. 휴대폰은 1개, 넓은 화면은 4개까지
+  const stages = h('div', { class: 'stages' });
+  // 띄운 영상이 없을 때 안내를 보여 주는 빈 화면
+  const emptyOverlay = h('div', { class: 'overlay', role: 'status' });
+  const empty = h('div', { class: 'stage' }, emptyOverlay);
+  const showEmpty = (...nodes) => emptyOverlay.replaceChildren(...nodes);
+  let userChose = false; // 사용자가 직접 카메라를 골랐는지
 
-  const messages = {
-    idle: () => [h('p', {}, '카메라를 선택하세요')],
-    loading: () => [h('p', {}, '불러오는 중…')],
-    playing: () => [],
-    blocked: () => [],
-    offline: () => [
-      h('p', {}, h('strong', {}, current?.name ?? ''), ' 카메라는 현재 송출이 없습니다'),
-      h('div', { class: 'overlay-actions' },
-        h('button', { class: 'btn btn-quiet', type: 'button', onclick: () => start(current) }, '다시 시도'),
-        officialLink(resort, '공식 페이지에서 보기', 'btn'),
-      ),
-    ],
-    unsupported: () => [
-      h('p', {}, '이 브라우저에서는 재생할 수 없습니다. 새로고침하거나 공식 페이지에서 확인해 주세요.'),
-      officialLink(resort, '공식 페이지에서 보기', 'btn'),
-    ],
-    limit: () => [
-      h('p', {}, `${resort.limitSec}초 재생 후 정지했습니다`),
-      h('button', { class: 'btn', type: 'button', onclick: () => start(current) }, '계속 보기'),
-    ],
-  };
-
-  function onState(next) {
-    // 재생 성공과 송출 없음만 기록한다. auto 는 화면에 들어오며 자동으로 시작한 재생인지 여부다.
-    if (current && (next === 'playing' || next === 'offline')) {
-      analytics.track(next === 'playing' ? 'play_camera' : 'camera_offline', {
-        resort_id: resort.id,
-        camera_name: current.name,
-        auto: startedAuto,
-      });
-    }
-    isPlaying = next === 'playing';
-    overlay.replaceChildren(...messages[next]());
-    overlay.hidden = next === 'playing' || next === 'blocked';
-    // 송출이 없거나 멈춘 상태에서도 어느 카메라를 고른 것인지 표시를 유지한다.
-    if (current && next === 'offline') off.add(current);
-    if (current && next === 'playing') off.delete(current);
+  // 영상 칸을 다시 넣으면 재생이 끊기므로, 있는 칸은 건드리지 않고 빈 화면만 넣었다 뺀다.
+  function layout() {
+    stages.dataset.count = String(Math.max(tiles.length, 1));
+    if (tiles.length === 0) stages.append(empty);
+    else empty.remove();
+    currentCam = tiles.length > 0 ? resort.cams.indexOf(tiles[tiles.length - 1].cam) : -1;
     paintButtons();
   }
 
   function paintButtons() {
     resort.cams.forEach((cam, i) => {
-      const on = cam === current;
+      const on = tiles.some((tile) => tile.cam === cam);
       buttons[i].classList.toggle('is-on', on);
       buttons[i].classList.toggle('is-off', off.has(cam));
       buttons[i].setAttribute('aria-pressed', String(on));
@@ -462,27 +507,111 @@ function directStage(resort, firstCam = 0) {
     });
   }
 
+  const play = (tile) => tile.player.play(tile.cam, { limitSec: resort.limitSec });
+
+  function addTile(cam, auto) {
+    const media = h('div', { class: 'media' });
+    const overlay = h('div', { class: 'overlay', role: 'status' });
+    const label = h('span', { class: 'stage-label' }, cam.name);
+    // auto: 화면에 들어오며 자동으로 시작한 재생인지 여부
+    const tile = { cam, auto, playing: false, label, el: h('div', { class: 'stage' }, media, overlay, label), player: null };
+    const messages = {
+      // 탭이 가려져 멈춘 영상은 저절로 다시 틀지 않는다. 눌러야 다시 나온다.
+      idle: () => [
+        h('p', {}, '재생을 멈췄습니다'),
+        h('button', { class: 'btn', type: 'button', onclick: () => play(tile) }, '다시 재생'),
+      ],
+      loading: () => [h('p', {}, '불러오는 중…')],
+      playing: () => [],
+      blocked: () => [],
+      offline: () => [
+        h('p', {}, h('strong', {}, tile.cam.name), ' 카메라는 현재 송출이 없습니다'),
+        h('div', { class: 'overlay-actions' },
+          h('button', { class: 'btn btn-quiet', type: 'button', onclick: () => play(tile) }, '다시 시도'),
+          officialLink(resort, '공식 페이지에서 보기', 'btn'),
+        ),
+      ],
+      unsupported: () => [
+        h('p', {}, '이 브라우저에서는 재생할 수 없습니다. 새로고침하거나 공식 페이지에서 확인해 주세요.'),
+        officialLink(resort, '공식 페이지에서 보기', 'btn'),
+      ],
+      limit: () => [
+        h('p', {}, `${resort.limitSec}초 재생 후 정지했습니다`),
+        h('button', { class: 'btn', type: 'button', onclick: () => play(tile) }, '계속 보기'),
+      ],
+    };
+    const onState = (next) => {
+      // 재생 성공과 송출 없음만 기록한다.
+      if (next === 'playing' || next === 'offline') {
+        analytics.track(next === 'playing' ? 'play_camera' : 'camera_offline', {
+          resort_id: resort.id,
+          camera_name: tile.cam.name,
+          auto: tile.auto,
+        });
+      }
+      tile.playing = next === 'playing';
+      overlay.replaceChildren(...messages[next]());
+      overlay.hidden = next === 'playing' || next === 'blocked';
+      if (next === 'offline') off.add(tile.cam);
+      if (next === 'playing') off.delete(tile.cam);
+      paintButtons();
+    };
+    tile.player = createPlayer(media, { onState, preferNative: env.os === 'ios' });
+    tiles.push(tile);
+    stages.append(tile.el);
+    layout();
+    play(tile);
+  }
+
+  function removeTile(tile) {
+    tile.player.destroy();
+    tile.el.remove();
+    tiles.splice(tiles.indexOf(tile), 1);
+    if (tiles.length === 0) showEmpty(h('p', {}, '카메라를 선택하세요'));
+    layout();
+  }
+
+  // 카메라 단추를 눌렀을 때. 휴대폰은 보던 영상을 바꾸고, 넓은 화면은 함께 보기에 넣거나 뺀다.
+  function select(cam) {
+    userChose = true;
+    const max = isWide() ? MAX_TILES : 1;
+    const shown = tiles.find((tile) => tile.cam === cam);
+    if (shown && max > 1) {
+      removeTile(shown);
+      return;
+    }
+    if (max === 1 && tiles.length > 0) {
+      // 창을 좁혀 여러 개가 남아 있었다면 하나만 남긴다.
+      while (tiles.length > 1) removeTile(tiles[tiles.length - 1]);
+      const tile = tiles[0];
+      tile.cam = cam;
+      tile.auto = false;
+      tile.label.textContent = cam.name;
+      layout();
+      play(tile);
+      return;
+    }
+    if (tiles.length >= max) {
+      toast(`한 번에 ${MAX_TILES}대까지 볼 수 있습니다. 보고 있는 카메라를 하나 끄고 골라 주세요`);
+      return;
+    }
+    addTile(cam, false);
+  }
+
   // 확인해 보니 모든 카메라가 꺼져 있을 때: 재생을 기다리게 하지 않고 바로 알린다.
   function showAllOff() {
-    overlay.replaceChildren(
+    showEmpty(
       h('p', {}, '지금은 모든 카메라의 송출이 없습니다'),
       h('div', { class: 'overlay-actions' },
         h('button', { class: 'btn btn-quiet', type: 'button', onclick: () => autoStart?.() }, '다시 확인'),
         officialLink(resort, '공식 페이지에서 보기', 'btn'),
       ),
     );
-    overlay.hidden = false;
   }
 
-  function start(cam, auto = false) {
-    current = cam;
-    currentCam = resort.cams.indexOf(cam);
-    startedAuto = auto;
-    player.play(cam, { limitSec: resort.limitSec });
-  }
-
-  player = createPlayer(media, { onState, preferNative: env.os === 'ios' });
-  onState('idle');
+  stopStage = () => tiles.forEach((tile) => tile.player.destroy());
+  showEmpty(h('p', {}, '카메라를 선택하세요'));
+  layout();
   // 들어오면 각 카메라의 스트림이 살아 있는지 먼저 확인하고, 꺼진 카메라는 건너뛰어 재생한다.
   let checkRun = 0;
   autoStart = () => {
@@ -490,20 +619,21 @@ function directStage(resort, firstCam = 0) {
     const preferred = resort.cams[firstCam] ?? resort.cams[0];
     const states = new Map();
     let decided = false;
-    current = null;
-    onState('loading');
+    userChose = false;
+    showEmpty(h('p', {}, '불러오는 중…'));
 
     const onResult = (cam, state) => {
       // 그 사이 화면을 떠났거나 "다시 확인"을 눌렀으면 이 결과는 버린다.
-      if (mine !== checkRun || !media.isConnected) return;
+      if (mine !== checkRun || !stages.isConnected) return;
       states.set(cam, state);
       // 지금 잘 나오고 있는 카메라는 확인 요청이 한 번 실패했다고 꺼짐으로 바꾸지 않는다.
-      if (state === 'off' && !(cam === current && isPlaying)) off.add(cam);
+      const playingNow = tiles.some((tile) => tile.cam === cam && tile.playing);
+      if (state === 'off' && !playingNow) off.add(cam);
       else if (state !== 'off') off.delete(cam);
       paintButtons();
 
       // 사용자가 직접 카메라를 골랐으면 자동 재생은 하지 않는다.
-      if (decided || current !== null) return;
+      if (decided || userChose || tiles.length > 0) return;
       const decision = decideStart(resort.cams, states, preferred);
       if (decision.action === 'wait') return;
       decided = true;
@@ -513,10 +643,10 @@ function directStage(resort, firstCam = 0) {
       }
       // 확인하는 사이 탭이 가려졌으면 틀지 않는다. 보지 않는 영상이 데이터를 쓰지 않게 한다.
       if (document.hidden) {
-        onState('idle');
+        showEmpty(h('p', {}, '카메라를 선택하세요'));
         return;
       }
-      start(decision.cam, true);
+      addTile(decision.cam, true);
       // 공유받은 주소가 가리킨 카메라가 꺼져 있을 때만 바뀐 것을 알린다.
       if (decision.cam !== preferred && firstCam > 0) {
         toast(`${preferred.name} 카메라는 송출이 없어 ${decision.cam.name} 카메라를 보여 줍니다`);
@@ -529,11 +659,14 @@ function directStage(resort, firstCam = 0) {
   };
 
   return [
-    h('div', { class: 'stage' }, media, overlay),
+    stages,
     // 카메라와 공식 페이지 링크가 한 격자를 나눠 쓴다. 카메라가 홀수면 링크가 빈칸을 채우고, 짝수면 한 줄을 차지한다.
     h('div', { class: 'cams' },
       h('div', { class: 'cam-group', role: 'group', 'aria-label': '카메라' }, ...buttons),
       officialLink(resort, '공식 페이지에서 보기', `cam cam-link${resort.cams.length % 2 === 0 ? ' is-wide' : ''}`)),
+    resort.cams.length > 1
+      ? h('p', { class: 'muted small multi-hint' }, `카메라를 누르면 함께 보기에 추가되고, 다시 누르면 꺼집니다. 한 번에 ${MAX_TILES}대까지 볼 수 있습니다.`)
+      : null,
     resort.limitSec
       ? h('p', { class: 'muted small' }, `이 스키장은 공식 페이지와 같이 ${resort.limitSec}초 재생 후 정지합니다.`)
       : null,
@@ -563,7 +696,8 @@ function renderDetail(resort, firstCam) {
   analytics.track('view_resort', { resort_id: resort.id, resort_mode: resort.mode });
   const stage = { direct: directStage, official: officialStage, none: noneStage }[resort.mode](resort, firstCam);
   const fav = h('span', { class: 'top-fav' });
-  const drawFav = () => fav.replaceChildren(favButton(resort, drawFav));
+  const drawFav = () => fav.replaceChildren(favButton(resort, () => { drawFav(); drawSide(); }));
+  redrawTopFav = drawFav;
   drawFav();
   const weatherSlot = h('div', { id: 'weather-slot' }, weatherSection(resort));
   board.resort = resort;
@@ -600,8 +734,9 @@ function renderDetail(resort, firstCam) {
 let route = { view: 'list' };
 
 function render() {
-  player?.destroy(); // 화면을 떠나면 재생을 멈추고 정리한다
-  player = null;
+  stopStage?.(); // 화면을 떠나면 재생을 멈추고 정리한다
+  stopStage = null;
+  redrawTopFav = null;
   autoStart = null;
   currentCam = -1;
   route = parseRoute(location.hash, RESORTS);
@@ -637,6 +772,7 @@ function redrawWeather() {
   if (route.view === 'detail') {
     document.getElementById('weather-slot')?.replaceChildren(weatherSection(route.resort));
     drawBoard();
+    drawSide();
     watchSnow();
   } else {
     renderList();
@@ -649,6 +785,8 @@ window.addEventListener('hashchange', () => {
   app.querySelector('h1')?.focus({ preventScroll: true });
   loadWeather();
 });
+// 창 너비가 휴대폰 배치와 PC 배치의 경계를 넘으면 화면을 다시 그린다(이때 재생 중인 영상은 멈춘다).
+wideQuery.addEventListener('change', () => render());
 // 가려 두었던 탭으로 돌아오면 날씨가 오래됐는지 확인한다(영상은 다시 틀지 않는다).
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) loadWeather();

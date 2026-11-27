@@ -223,14 +223,42 @@ a { text-underline-offset: 3px; }
 /* 보기 묶음: 영상, 전광판 한 줄, 카메라 */
 .watch { display: flex; flex-direction: column; gap: var(--gap-inside); }
 
+/* 영상 칸들의 묶음. 휴대폰은 한 칸, 넓은 화면은 네 칸까지 */
+.stages {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+  margin: 0 -16px;
+  background: var(--stage);
+  overflow: hidden;
+}
 .stage {
   position: relative;
-  margin: 0 -16px;
+  min-width: 0;
   aspect-ratio: 16 / 9;
   background: var(--stage);
   color: var(--stage-text);
   overflow: hidden;
 }
+/* 여러 칸을 볼 때 어느 카메라인지 알려 주는 이름표 */
+.stage-label {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  max-width: calc(100% - 16px);
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgb(0 0 0 / 0.6);
+  color: #fff;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+.stages[data-count="1"] .stage-label { display: none; }
+.multi-hint { display: none; margin: 0; }
 .media, .media video, .media iframe {
   position: absolute;
   inset: 0;
@@ -508,8 +536,8 @@ a { text-underline-offset: 3px; }
 .footer p { margin: 0 0 4px; }
 
 @media (min-width: 600px) {
-  .stage { margin: 0; border-radius: 16px; }
-  .stage:has(+ .board:not([hidden])) { border-radius: 16px 16px 0 0; }
+  .stages { margin: 0; border-radius: 16px; }
+  .stages:has(+ .board:not([hidden])) { border-radius: 16px 16px 0 0; }
   .board.is-attached { margin: -12px 0 0; border-radius: 0 0 16px 16px; }
   .cams { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .cam-link.is-wide { grid-column: auto; }
@@ -517,4 +545,110 @@ a { text-underline-offset: 3px; }
 
 @media (orientation: landscape) and (max-height: 500px) {
   .stage { aspect-ratio: auto; height: calc(100vh - 56px); height: calc(100dvh - 56px); }
+}
+
+/* ---------- 넓은 화면(PC): 왼쪽 목록 · 가운데 영상 · 오른쪽 날씨와 교통 ---------- */
+@media (min-width: 1100px) {
+  #app.is-wide {
+    display: grid;
+    grid-template-columns: 340px minmax(0, 1fr);
+    gap: 0 32px;
+    align-items: start;
+    max-width: 1760px;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  .page { min-width: 0; }
+
+  /* 왼쪽 목록: 화면에 붙어 있고 따로 스크롤된다 */
+  .side {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    height: 100dvh;
+    padding-bottom: 24px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+  }
+  .side-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 64px;
+    background: var(--bg);
+  }
+  .side-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: inherit;
+    font-size: var(--fs-title);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    text-decoration: none;
+  }
+  .side-head .icon-btn { margin-right: -12px; }
+  .row.is-current { background: var(--today); }
+  .row.is-current .row-name { color: var(--accent); }
+
+  /* 목록이 늘 보이므로 뒤로 가기는 필요 없다 */
+  .is-wide .back { display: none; }
+  .is-wide .top { min-height: 64px; margin: 0; padding: 0; }
+
+  /* 스키장 화면: 영상이 왼쪽 넓은 칸, 날씨와 교통이 오른쪽 좁은 칸 */
+  .is-wide .detail {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: var(--gap-group);
+    align-items: start;
+  }
+  .is-wide .detail > :first-child { grid-column: 1; grid-row: 1 / span 4; }
+  .is-wide .detail > :not(:first-child) { grid-column: 2; }
+
+  .stages:not([data-count="1"]) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .is-wide .cams { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .is-wide .multi-hint { display: block; }
+
+  /* 첫 화면 안내 */
+  .is-wide .ridge { margin: 20px 0 8px; height: 64px; }
+  .welcome { max-width: 720px; padding-top: 8px; }
+  .welcome h1 { margin: 0 0 8px; font-size: var(--fs-figure); letter-spacing: -0.02em; }
+  .welcome h1:focus { outline: none; }
+  .welcome-lead { margin: 0; max-width: 34em; color: var(--muted); text-wrap: pretty; }
+  .welcome-snow { margin-top: 32px; }
+  .welcome-snow h2 { margin: 0 0 8px; font-size: var(--fs-body); }
+  .welcome-snow ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+    overflow: hidden;
+  }
+  .welcome-snow li + li { border-top: 1px solid var(--line); }
+  .welcome-snow a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: var(--tap);
+    padding: 8px 16px;
+    color: inherit;
+    text-decoration: none;
+  }
+  .welcome-name { font-weight: 600; }
+  .welcome-snow .kind-snow { font-size: var(--fs-label); font-weight: 600; }
+}
+
+/* 아주 넓지는 않은 PC 화면에서는 정보 칸과 목록을 조금 좁힌다 */
+@media (min-width: 1100px) and (max-width: 1399px) {
+  #app.is-wide { grid-template-columns: 300px minmax(0, 1fr); gap: 0 24px; }
+  .is-wide .detail { grid-template-columns: minmax(0, 1fr) 320px; }
+  .is-wide .cams { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
