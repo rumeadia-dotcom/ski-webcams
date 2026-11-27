@@ -218,7 +218,8 @@ export async function getWeather({
 }
 
 // 사이트 맨 위 그림을 고르는 기준: 국내 스키장(하단) 지금 기온의 평균을 반올림해서
-// -10도 이하면 추움(cold), -9도에서 2도면 적당(happy), 3도 이상이면 더움(hot).
+// -10도 이하면 추움(cold), -9도에서 2도면 극성수기(happy), 3도 이상이면 더움(hot).
+// 문구(word)는 그림과 같되, -15도 이하면 추움 그림에 '개추움'이라고 적는다.
 // 기온을 하나도 모르면 null.
 export function moodOf(weather, resorts) {
   const temps = resorts
@@ -227,5 +228,7 @@ export function moodOf(weather, resorts) {
     .filter((value) => typeof value === 'number' && Number.isFinite(value));
   if (temps.length === 0) return null;
   const avg = Math.round(temps.reduce((sum, value) => sum + value, 0) / temps.length);
-  return { avg, mood: avg <= -10 ? 'cold' : avg <= 2 ? 'happy' : 'hot' };
+  const mood = avg <= -10 ? 'cold' : avg <= 2 ? 'happy' : 'hot';
+  const word = avg <= -15 ? '개추움' : { cold: '추움', happy: '극성수기', hot: '더움' }[mood];
+  return { avg, mood, word };
 }
