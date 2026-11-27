@@ -1,6 +1,6 @@
 import { RESORTS } from './data.js';
 
-const KEY = 'ski.weather.v4'; // 기간이나 스키장 목록이 바뀌면 이름을 바꿔 예전 저장본을 버린다
+const KEY = 'ski.weather.v5'; // 기간이나 스키장 목록이 바뀌면 이름을 바꿔 예전 저장본을 버린다
 const TTL_MS = 30 * 60 * 1000;
 const TIMEOUT_MS = 8000; // 응답이 멈춘 채 끝나지 않는 연결을 끊는 시간
 const TODAY_INDEX = 3; // past_days=3 이므로 보통 네 번째 날이 오늘. 응답에 현재 시각이 없을 때만 쓴다
