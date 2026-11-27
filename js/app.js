@@ -127,8 +127,7 @@ function dayLabel(day) {
 
 // 목록에서 이 스키장을 누르면 무엇이 나오는지 미리 알려 준다.
 function camSummary(resort) {
-  const area = resort.area ? `${resort.area} · ` : ''; // 일본은 지역 이름을 앞에 붙인다
-  if (resort.mode === 'direct') return h('span', { class: 'row-sub is-live' }, `${area}바로 재생 · 카메라 ${resort.cams.length}`);
+  if (resort.mode === 'direct') return h('span', { class: 'row-sub is-live' }, `바로 재생 · 카메라 ${resort.cams.length}`);
   if (resort.mode === 'official') return h('span', { class: 'row-sub' }, `공식 페이지 · 카메라 ${resort.camCount}`);
   return h('span', { class: 'row-sub' }, '웹캠 없음');
 }
@@ -245,10 +244,10 @@ function listWeather(resort) {
 function resortList(onFav, activeId = null) {
   const favCount = RESORTS.filter((r) => state.favorites.includes(r.id)).length;
   const sorted = sortResorts(RESORTS, state.favorites);
-  // 즐겨찾기 아래에서 일본 스키장이 시작되는 자리에 구분 제목을 넣는다.
-  const japanStart = sorted.findIndex((resort, i) => i >= favCount && isJapan(resort));
+  // 즐겨찾기 아래에서 일본 스키장은 지역이 바뀌는 자리마다 구분 제목을 넣는다(일본 · 홋카이도 등).
+  const startsGroup = (resort, i) => i >= favCount && isJapan(resort) && (i === favCount || sorted[i - 1].area !== resort.area);
   const rows = sorted.flatMap((resort, i) => [
-    i === japanStart ? h('li', { class: 'row-group' }, h('h2', { class: 'row-group-title' }, '일본')) : null,
+    startsGroup(resort, i) ? h('li', { class: 'row-group' }, h('h2', { class: 'row-group-title' }, `일본 · ${resort.area}`)) : null,
     h('li', { class: `row${favCount > 0 && i === favCount ? ' is-rest-start' : ''}${state.weather?.[resort.id]?.kind === 'snow' ? ' snowfall' : ''}${resort.id === activeId ? ' is-current' : ''}` },
       favButton(resort, onFav),
       h('a', { class: 'row-link', href: `#/resort/${resort.id}`, 'aria-current': resort.id === activeId ? 'page' : null },
@@ -713,7 +712,8 @@ function renderDetail(resort, firstCam) {
       h('span', { class: 'top-actions' }, shareButton(resort), fav),
     ),
     // 세 묶음: 보기(영상·요약·카메라), 날씨, 교통. 묶음 안은 촘촘하게, 묶음 사이는 넉넉하게 둔다.
-    h('main', { class: 'detail' },
+    // 영상이 없는 스키장은 날씨와 교통이 화면의 주인공이 되도록 배치를 달리한다(no-video).
+    h('main', { class: `detail${resort.mode === 'direct' ? '' : ' no-video'}` },
       board.el ? h('div', { class: 'watch' }, stage[0], board.el, ...stage.slice(1)) : stage,
       weatherSlot, isJapan(resort) ? null : trafficSection(resort)), // 교통은 국내 출발 기준이라 일본에는 없다
     footer(),

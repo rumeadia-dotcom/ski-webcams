@@ -551,8 +551,8 @@ a { text-underline-offset: 3px; }
 @media (min-width: 1100px) {
   #app.is-wide {
     display: grid;
-    grid-template-columns: 340px minmax(0, 1fr);
-    gap: 0 32px;
+    grid-template-columns: 300px minmax(0, 1fr);
+    gap: 0 24px;
     align-items: start;
     max-width: 1760px;
     padding-left: 24px;
@@ -560,7 +560,7 @@ a { text-underline-offset: 3px; }
   }
   .page { min-width: 0; }
 
-  /* 왼쪽 목록: 화면에 붙어 있고 따로 스크롤된다 */
+  /* 왼쪽 목록: 화면에 붙어 있고 따로 스크롤된다. 제목 줄 아래에 목록이 이어 붙은 한 덩어리다 */
   .side {
     position: sticky;
     top: 0;
@@ -579,7 +579,8 @@ a { text-underline-offset: 3px; }
     display: flex;
     align-items: center;
     justify-content: space-between;
-    min-height: 64px;
+    min-height: 56px;
+    border-bottom: 1px solid var(--line);
     background: var(--bg);
   }
   .side-brand {
@@ -593,34 +594,45 @@ a { text-underline-offset: 3px; }
     text-decoration: none;
   }
   .side-head .icon-btn { margin-right: -12px; }
+  .side .list { border-top: 0; border-radius: 0 0 16px 16px; }
   .row.is-current { background: var(--today); }
   .row.is-current .row-name { color: var(--accent); }
 
   /* 목록이 늘 보이므로 뒤로 가기는 필요 없다 */
   .is-wide .back { display: none; }
-  .is-wide .top { min-height: 64px; margin: 0; padding: 0; }
+  .is-wide .top { margin: 0; padding: 0; }
 
-  /* 스키장 화면: 영상이 왼쪽 넓은 칸, 날씨와 교통이 오른쪽 좁은 칸 */
+  /* 스키장 화면(기본): 영상 아래에 날씨와 교통을 나란히 둔다 */
   .is-wide .detail {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 380px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--gap-group);
     align-items: start;
   }
-  .is-wide .detail > :first-child { grid-column: 1; grid-row: 1 / span 4; }
-  .is-wide .detail > :not(:first-child) { grid-column: 2; }
+  .is-wide .detail > :first-child { grid-column: 1 / -1; }
+  /* 교통이 없는 스키장(일본)은 날씨가 한 줄을 다 쓴다 */
+  .is-wide .detail > #weather-slot:last-child { grid-column: 1 / -1; }
+  /* 영상이 없는 스키장은 글줄이 너무 길어지지 않게 폭을 묶는다 */
+  .is-wide .detail.no-video { max-width: 960px; }
 
-  .stages:not([data-count="1"]) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* 영상 칸: 몇 개를 보든 전체 크기는 같다. 카메라 단추가 누를 때마다 움직이지 않게 하기 위해서다 */
+  .is-wide .stages:not([data-count="1"]) {
+    aspect-ratio: 16 / 9;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: center;
+  }
+  /* 세 개일 때는 셋째를 아랫줄 가운데에 둔다 */
+  .is-wide .stages[data-count="3"] .stage:nth-child(3) { grid-column: 1 / -1; justify-self: center; width: calc(50% - 1px); }
   .is-wide .cams { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .is-wide .multi-hint { display: block; }
 
   /* 첫 화면 안내 */
-  .is-wide .ridge { margin: 20px 0 8px; height: 64px; }
+  .is-wide .ridge { margin: 24px 0 8px; height: 56px; }
   .welcome { max-width: 720px; padding-top: 8px; }
   .welcome h1 { margin: 0 0 8px; font-size: var(--fs-figure); letter-spacing: -0.02em; }
   .welcome h1:focus { outline: none; }
   .welcome-lead { margin: 0; max-width: 34em; color: var(--muted); text-wrap: pretty; }
-  .welcome-snow { margin-top: 32px; }
+  .welcome-snow { margin-top: 24px; }
   .welcome-snow h2 { margin: 0 0 8px; font-size: var(--fs-body); }
   .welcome-snow ul {
     margin: 0;
@@ -646,9 +658,10 @@ a { text-underline-offset: 3px; }
   .welcome-snow .kind-snow { font-size: var(--fs-label); font-weight: 600; }
 }
 
-/* 아주 넓지는 않은 PC 화면에서는 정보 칸과 목록을 조금 좁힌다 */
-@media (min-width: 1100px) and (max-width: 1399px) {
-  #app.is-wide { grid-template-columns: 300px minmax(0, 1fr); gap: 0 24px; }
-  .is-wide .detail { grid-template-columns: minmax(0, 1fr) 320px; }
-  .is-wide .cams { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+/* 아주 넓은 화면: 날씨와 교통을 영상 오른쪽 칸으로 올린다 */
+@media (min-width: 1500px) {
+  #app.is-wide { grid-template-columns: 340px minmax(0, 1fr); }
+  .is-wide .detail:not(.no-video) { grid-template-columns: minmax(0, 1fr) 380px; }
+  .is-wide .detail:not(.no-video) > :first-child { grid-column: 1; grid-row: 1 / span 4; }
+  .is-wide .detail:not(.no-video) > :not(:first-child) { grid-column: 2; }
 }
