@@ -519,7 +519,7 @@ a { text-underline-offset: 3px; }
 .board-part:active { opacity: 0.7; }
 .icon-btn, .back { border-radius: 12px; }
 @media (hover: hover) {
-  .row-link:hover, .welcome-snow a:hover, .side-brand:hover, .fav:hover, .cam:hover, .route:hover, .btn-line:hover, .icon-btn:hover, .back:hover {
+  .row-link:hover, .side-brand:hover, .fav:hover, .cam:hover, .route:hover, .btn-line:hover, .icon-btn:hover, .back:hover {
     background-color: color-mix(in srgb, var(--accent) 6%, transparent);
   }
   .btn:hover { filter: brightness(1.06); }
@@ -628,38 +628,6 @@ a { text-underline-offset: 3px; }
   .is-wide .stages[data-count="3"] .stage:nth-child(3) { grid-column: 1 / -1; justify-self: center; width: calc(50% - 1px); }
   .is-wide .cams { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .is-wide .multi-hint { display: block; }
-
-  /* 첫 화면 안내. 휴대폰 목록 화면과 같은 순서다: 제목 줄, 능선, 내용 */
-  .is-wide .ridge { margin: -4px -24px 12px 0; } /* 오른쪽은 화면 끝까지 잇는다 */
-  .is-wide .notice { max-width: 480px; }
-  .welcome { display: flex; flex-direction: column; gap: var(--gap-group); }
-  .welcome-lead { margin: 0; max-width: 32em; text-wrap: pretty; }
-  .welcome-snow { max-width: 480px; }
-  .welcome-snow h2 { margin: 0 0 8px; font-size: var(--fs-body); }
-  .welcome-snow p { margin: 0; }
-  .welcome-snow ul {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    background: var(--surface);
-    overflow: hidden;
-  }
-  .welcome-snow :focus-visible { outline-offset: -3px; border-radius: 12px; }
-  .welcome-snow li + li { border-top: 1px solid var(--line); }
-  .welcome-snow a {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    min-height: var(--tap);
-    padding: 8px 16px;
-    color: inherit;
-    text-decoration: none;
-  }
-  .welcome-name { font-weight: 600; }
-  .welcome-snow .kind-snow { font-size: var(--fs-label); font-weight: 600; }
 }
 
 /* 아주 넓은 화면: 날씨와 교통을 영상 오른쪽 칸으로 올린다 */

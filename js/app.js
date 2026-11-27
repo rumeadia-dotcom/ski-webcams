@@ -277,46 +277,8 @@ function drawSide() {
   side.scrollTop = y;
 }
 
-// 넓은 화면의 첫 화면: 목록은 왼쪽에 있으므로 오른쪽에는 안내와 눈 소식을 둔다.
-// 눈 소식은 지금 내리는 곳, 오늘 예보, 내일 예보 순이고 같은 때끼리는 양이 많은 곳이 먼저다.
-function snowNews() {
-  const when = (text) => (text.startsWith('지금') ? 0 : text.startsWith('오늘') ? 1 : 2);
-  const cm = (text) => Number.parseFloat(/[\d.]+/.exec(text)?.[0] ?? '0');
-  return RESORTS
-    .map((resort) => ({ resort, note: weatherNote(state.weather?.[resort.id]) }))
-    .filter(({ note }) => note?.kind === 'snow')
-    .sort((a, b) => when(a.note.text) - when(b.note.text) || cm(b.note.text) - cm(a.note.text));
-}
-
-function welcome() {
-  const snowy = snowNews();
-  const news =
-    state.weather === undefined ? h('p', { class: 'muted' }, '눈 소식을 확인하는 중…')
-    : state.weather === null ? null // 날씨를 못 불러온 안내가 위에 따로 나온다
-    : snowy.length === 0 ? h('p', { class: 'muted' }, '오늘과 내일 눈 예보가 있는 스키장이 없습니다.')
-    : h('ul', {}, ...snowy.map(({ resort, note }) =>
-        h('li', {}, h('a', { href: `#/resort/${resort.id}` },
-          h('span', { class: 'welcome-name' }, resort.name),
-          h('span', { class: 'kind-snow' }, note.text)))));
-  return h('main', { class: 'welcome' },
-    h('p', { class: 'welcome-lead' }, '왼쪽 목록에서 스키장을 고르면 실시간 웹캠과 날씨가 나옵니다. 카메라는 한 번에 4대까지 함께 볼 수 있습니다.'),
-    news ? h('section', { class: 'welcome-snow', 'aria-label': '눈 소식' }, h('h2', {}, '눈 소식'), news) : null,
-  );
-}
-
 function renderList() {
   document.title = '스키장 웹캠';
-  if (isWide()) {
-    mount(
-      h('header', { class: 'top' }, h('h1', { tabindex: '-1' }, '어느 스키장을 볼까요?')),
-      h('div', { class: 'ridge', html: RIDGE }),
-      state.weather === null ? weatherFailure('notice') : null,
-      welcome(),
-      footer(),
-    );
-    watchSnow();
-    return;
-  }
   mount(
     h('header', { class: 'top' },
       h('h1', { class: 'brand', tabindex: '-1' }, '스키장 웹캠',
@@ -749,6 +711,10 @@ function render() {
   autoStart = null;
   currentCam = -1;
   route = parseRoute(location.hash, RESORTS);
+  // 넓은 화면은 목록이 늘 왼쪽에 있으므로, 첫 화면에서는 목록 맨 위 스키장을 바로 보여 준다(즐겨찾기가 있으면 그 첫째).
+  if (route.view === 'list' && isWide()) {
+    route = { view: 'detail', resort: sortResorts(RESORTS, state.favorites)[0], cam: 0 };
+  }
   if (route.view === 'detail') renderDetail(route.resort, route.cam);
   else renderList();
   window.scrollTo(0, 0);
