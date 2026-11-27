@@ -30,21 +30,4 @@
   --flake: #7fb0e3;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0e151c;
-    --surface: #17212b;
-    --text: #e8eef3;
-    --muted: #97a7b6;
-    --line: #27343f;
-    --accent: #6cb2f7;
-    --accent-text: #08121b;
-    --star: #f2b63c;
-    --today: #1e3145;
-    --snow: #8cc4ff;
-    --rain: #7fb0e6;
-    --sun: #f2b63c;
-    --stage: #05090d;
-    --flake: #dcebfa;
-  }
-}
+/* 기기 설정이 다크여도 항상 밝은 화면으로 보여 준다(2026-11-27 결정). */

@@ -23,13 +23,13 @@ test('배포용 빌드', async (t) => {
     assert.doesNotMatch(html, /"(js|css)\//);
   });
 
-  await t.test('자바스크립트는 파일 하나로 합쳐지고, 식별값이 붙은 아이콘을 쓴다', () => {
+  await t.test('자바스크립트는 파일 하나로 합쳐지고, 맨 위 그림 세 장이 실제로 있다', () => {
     const scripts = readdirSync(path.join(dist, 'assets')).filter((f) => /^app\..+\.js$/.test(f));
     assert.equal(scripts.length, 1);
     const code = readFileSync(path.join(dist, 'assets', scripts[0]), 'utf8');
     assert.doesNotMatch(code, /from\s*["']\.\//); // 남은 상대 경로 가져오기가 없어야 한다
-    const icon = refs.find((r) => /sticker-144\.[\w-]+\.png$/.test(r));
-    assert.ok(code.includes(icon), '아이콘 경로');
+    assert.ok(code.includes('img/mood-'), '맨 위 그림 경로');
+    for (const mood of ['cold', 'happy', 'hot']) assert.ok(existsSync(path.join(dist, 'img', `mood-${mood}.png`)), mood);
     assert.ok(code.includes('/api/weather'));
     assert.ok(code.includes('live.yongpyong.co.kr'));
   });

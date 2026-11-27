@@ -1,6 +1,6 @@
 import { RESORTS, officialUrlFor, isJapan } from './data.js';
 import { loadFavorites, toggleFavorite, sortResorts } from './favorites.js';
-import { getWeather, lastWeatherError, weatherNote, amountLabel, boardWeather } from './weather.js';
+import { getWeather, lastWeatherError, weatherNote, amountLabel, boardWeather, moodOf } from './weather.js';
 import { detectEnv } from './browser.js';
 import { createPlayer } from './player.js';
 import { checkCam, decideStart } from './health.js';
@@ -12,7 +12,6 @@ import { josa } from './text.js';
 
 // 배포용 빌드는 식별값이 붙은 아이콘 경로를 넣어 준다. 개발 중에는 원본 경로를 쓴다.
 const BUILT = typeof __ICON_URL__ === 'string';
-const ICON_URL = BUILT ? __ICON_URL__ : 'img/sticker-144.png';
 const storage = safeStorage();
 const analytics = createAnalytics();
 const app = document.getElementById('app');
@@ -154,11 +153,21 @@ function watchSnow() {
   for (const el of document.querySelectorAll('.snowfall')) snowWatcher?.observe(el);
 }
 
-// 목록 화면 제목 아래의 산 능선. 장식이라 읽기 도구에는 숨긴다.
-const RIDGE = '<svg viewBox="0 0 360 44" preserveAspectRatio="none" aria-hidden="true" focusable="false">'
-  + '<path class="ridge-far" d="M0 44V30l34-12 22 9 40-21 30 16 26-10 44 20 36-18 30 12 28-9 34 13 36-8v22z"/>'
-  + '<path class="ridge-near" d="M0 44V36l46-13 30 10 52-17 38 14 44-9 50 15 44-11 56 9v10z"/>'
-  + '</svg>';
+// 맨 위 그림: 국내 스키장 평균 기온에 따라 추움·신남·더움 그림이 바뀐다. 날씨를 모를 때는 신남 그림만 보여 준다.
+const MOOD_WORD = { cold: '추움', happy: '신남', hot: '더움' };
+function moodBanner() {
+  const mood = moodOf(state.weather, RESORTS);
+  return h('div', { class: 'mood' },
+    h('img', { class: 'mood-img', src: `img/mood-${mood?.mood ?? 'happy'}.png`, alt: '', height: '288' }),
+    mood
+      ? h('p', { class: 'mood-text' },
+          h('span', { class: 'mood-label' }, '국내 스키장 평균'),
+          h('span', { class: 'mood-now' },
+            h('strong', { class: 'mood-temp' }, `${mood.avg}°`),
+            h('span', { class: `mood-word is-${mood.mood}` }, MOOD_WORD[mood.mood])))
+      : null,
+  );
+}
 
 // ---------- 공통 영역 ----------
 
@@ -269,10 +278,10 @@ function drawSide() {
   const y = side.scrollTop;
   side.replaceChildren(
     h('div', { class: 'side-head' },
-      h('a', { class: 'side-brand', href: '#/' }, 'J·J 웹캠',
-        h('img', { class: 'app-icon', src: ICON_URL, alt: '', width: '144', height: '144' })),
+      h('a', { class: 'side-brand', href: '#/' }, 'J·J 웹캠'),
       shareButton(null),
     ),
+    moodBanner(),
     resortList(() => { drawSide(); redrawTopFav?.(); watchSnow(); }, route.view === 'detail' ? route.resort.id : null),
   );
   side.scrollTop = y;
@@ -282,11 +291,10 @@ function renderList() {
   document.title = 'J·J 웹캠';
   mount(
     h('header', { class: 'top' },
-      h('h1', { class: 'brand', tabindex: '-1' }, 'J·J 웹캠',
-        h('img', { class: 'app-icon', src: ICON_URL, alt: '', width: '144', height: '144' })),
+      h('h1', { class: 'brand', tabindex: '-1' }, 'J·J 웹캠'),
       h('span', { class: 'top-actions' }, shareButton(null)),
     ),
-    h('div', { class: 'ridge', html: RIDGE }),
+    moodBanner(),
     state.weather === null ? weatherFailure('notice') : null,
     h('main', {}, resortList(renderList)),
     footer(),

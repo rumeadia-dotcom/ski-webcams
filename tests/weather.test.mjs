@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { weatherKind, buildWeatherUrl, parseWeather, getWeather, weatherPoints } from '../js/weather.js';
+import { weatherKind, buildWeatherUrl, parseWeather, getWeather, weatherPoints, moodOf } from '../js/weather.js';
 import { RESORTS } from '../js/data.js';
 
 const two = [
@@ -290,4 +290,19 @@ test('정상 지점이 있는 스키장은 하단과 정상 날씨를 따로 받
   assert.equal(w.b.top, undefined);
   // 정상 응답만 빠져도 하단 날씨는 그대로 쓴다.
   assert.equal(parseWeather([loc(758, 10), loc(120, 14)], resorts).a.top, undefined);
+});
+
+test('맨 위 그림: 국내 스키장 평균 기온으로 추움·신남·더움을 고른다', () => {
+  const resorts = [{ id: 'a' }, { id: 'b' }, { id: 'j', country: 'jp' }];
+  const at = (a, b, j = 30) => moodOf({ a: { temp: a }, b: { temp: b }, j: { temp: j } }, resorts);
+  assert.deepEqual(at(-12, -8), { avg: -10, mood: 'cold' });
+  assert.deepEqual(at(-9.6, -9.6), { avg: -10, mood: 'cold' }); // 반올림한 값으로 나눈다
+  assert.deepEqual(at(-9, -9), { avg: -9, mood: 'happy' });
+  assert.deepEqual(at(1, 1.4), { avg: 1, mood: 'happy' });
+  assert.deepEqual(at(1.5, 1.5), { avg: 2, mood: 'hot' });
+  assert.deepEqual(at(10, 12), { avg: 11, mood: 'hot' });
+  assert.equal(at(-20, -20, 40).mood, 'cold', '일본 스키장 기온은 넣지 않는다');
+  assert.deepEqual(moodOf({ a: { temp: -3 } }, resorts), { avg: -3, mood: 'happy' }, '모르는 곳은 빼고 평균한다');
+  assert.equal(moodOf(undefined, resorts), null);
+  assert.equal(moodOf({}, resorts), null);
 });

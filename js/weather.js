@@ -216,3 +216,16 @@ export async function getWeather({
   }
   return null;
 }
+
+// 사이트 맨 위 그림을 고르는 기준: 국내 스키장(하단) 지금 기온의 평균을 반올림해서
+// -10도 이하면 추움(cold), -9도에서 1도면 신남(happy), 2도 이상이면 더움(hot).
+// 기온을 하나도 모르면 null.
+export function moodOf(weather, resorts) {
+  const temps = resorts
+    .filter((resort) => resort.country !== 'jp')
+    .map((resort) => weather?.[resort.id]?.temp)
+    .filter((value) => typeof value === 'number' && Number.isFinite(value));
+  if (temps.length === 0) return null;
+  const avg = Math.round(temps.reduce((sum, value) => sum + value, 0) / temps.length);
+  return { avg, mood: avg <= -10 ? 'cold' : avg <= 1 ? 'happy' : 'hot' };
+}
