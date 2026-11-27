@@ -1,5 +1,5 @@
 ---
-name: 스키장 웹캠
+name: J·J 웹캠
 description: 국내 스키장의 지금 모습, 눈, 가는 길을 한 화면에서 확인하는 모바일 웹
 colors:
   slope-blue: "#0a63bd"
@@ -123,7 +123,7 @@ components:
     padding: "10px 16px"
 ---
 
-# Design System: 스키장 웹캠
+# Design System: J·J 웹캠
 
 ## Overview
 

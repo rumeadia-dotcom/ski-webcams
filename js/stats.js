@@ -424,7 +424,7 @@ function render() {
   ];
   root.replaceChildren(
     h('header', { class: 'head' },
-      h('h1', {}, '스키장 웹캠 통계'),
+      h('h1', {}, 'J·J 웹캠 통계'),
       h('a', { class: 'head-link', href: './' }, '사이트로 가기')),
     h('main', {}, ...parts.filter(Boolean)));
   if (focusKey) root.querySelector(`[data-key="${focusKey}"]`)?.focus();

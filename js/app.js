@@ -195,7 +195,7 @@ function shareButton(resort) {
     onclick: async () => {
       const url = shareUrl({ origin: location.origin, pages: BUILT, resortId: resort?.id, cam: currentCam });
       const cam = resort?.cams?.[currentCam];
-      const title = resort ? `${resort.name}${cam ? ` ${cam.name}` : ''} 실시간 웹캠` : '스키장 웹캠';
+      const title = resort ? `${resort.name}${cam ? ` ${cam.name}` : ''} 실시간 웹캠` : 'J·J 웹캠';
       const result = await share({ title, url });
       if (result === 'cancelled') return;
       if (result === 'failed') {
@@ -269,7 +269,7 @@ function drawSide() {
   const y = side.scrollTop;
   side.replaceChildren(
     h('div', { class: 'side-head' },
-      h('a', { class: 'side-brand', href: '#/' }, '스키장 웹캠',
+      h('a', { class: 'side-brand', href: '#/' }, 'J·J 웹캠',
         h('img', { class: 'app-icon', src: ICON_URL, alt: '', width: '144', height: '144' })),
       shareButton(null),
     ),
@@ -279,10 +279,10 @@ function drawSide() {
 }
 
 function renderList() {
-  document.title = '스키장 웹캠';
+  document.title = 'J·J 웹캠';
   mount(
     h('header', { class: 'top' },
-      h('h1', { class: 'brand', tabindex: '-1' }, '스키장 웹캠',
+      h('h1', { class: 'brand', tabindex: '-1' }, 'J·J 웹캠',
         h('img', { class: 'app-icon', src: ICON_URL, alt: '', width: '144', height: '144' })),
       h('span', { class: 'top-actions' }, shareButton(null)),
     ),
@@ -696,7 +696,7 @@ function noneStage(resort) {
 }
 
 function renderDetail(resort, firstCam) {
-  document.title = `${resort.name} · 스키장 웹캠`;
+  document.title = `${resort.name} · J·J 웹캠`;
   analytics.track('view_resort', { resort_id: resort.id, resort_mode: resort.mode });
   const stage = { direct: directStage, official: officialStage, none: noneStage }[resort.mode](resort, firstCam);
   const fav = h('span', { class: 'top-fav' });

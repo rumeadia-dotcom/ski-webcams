@@ -33,7 +33,7 @@ export function sharePageHtml(resort, { siteUrl, image }) {
 <title>${title}</title>
 <meta name="description" content="${description}">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="스키장 웹캠">
+<meta property="og:site_name" content="J·J 웹캠">
 <meta property="og:title" content="${title}">
 <meta property="og:description" content="${description}">
 <meta property="og:image" content="${siteUrl}/${image}">

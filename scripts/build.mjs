@@ -91,7 +91,7 @@ await cp(path.join(root, 'manifest.webmanifest'), path.join(dist, 'manifest.webm
 // 스키장별 공유 미리보기 페이지(/r/{id}). 메신저가 제목과 그림을 읽을 수 있게 한다.
 await mkdir(path.join(dist, 'r'), { recursive: true });
 for (const resort of RESORTS) {
-  await writeFile(path.join(dist, 'r', `${resort.id}.html`), sharePageHtml(resort, { siteUrl: SITE_URL, image: 'img/og-3.png' }));
+  await writeFile(path.join(dist, 'r', `${resort.id}.html`), sharePageHtml(resort, { siteUrl: SITE_URL, image: 'img/og-4.png' }));
 }
 
 console.log('빌드 완료:', [outputFor(js.metafile, 'js/app.js'), outputFor(css.metafile, 'css/style.css'), icon, touchIcon].join(', '));
