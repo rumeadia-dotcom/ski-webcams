@@ -153,8 +153,8 @@ function watchSnow() {
   for (const el of document.querySelectorAll('.snowfall')) snowWatcher?.observe(el);
 }
 
-// 맨 위 그림: 국내 스키장 평균 기온에 따라 추움·신남·더움 그림이 바뀐다. 날씨를 모를 때는 신남 그림만 보여 준다.
-const MOOD_WORD = { cold: '추움', happy: '신남', hot: '더움' };
+// 맨 위 그림: 국내 스키장 평균 기온에 따라 추움·적당·더움 그림이 바뀐다. 날씨를 모를 때는 적당 그림만 보여 준다.
+const MOOD_WORD = { cold: '추움', happy: '적당', hot: '더움' };
 function moodBanner() {
   const mood = moodOf(state.weather, RESORTS);
   return h('div', { class: 'mood' },
