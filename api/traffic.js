@@ -5,7 +5,7 @@
 // 카카오를 부르지 않고 거절한다. 그러지 않으면 주소에 아무 값이나 붙여 하루 한도를 소진시킬 수 있다.
 // 주의: 13곳이 하루 종일 끊임없이 조회되면 13 × 288 × 7 = 26,208건으로 무료 한도(하루 10,000건)를 넘는다.
 // 방문자가 늘면 저장 시간을 20분(6,552건)으로 되돌린다.
-import { RESORTS } from '../js/data.js';
+import { RESORTS, isJapan } from '../js/data.js';
 import { originsFor, buildDirectionsUrl, parseDirections, driveTarget } from '../js/traffic.js';
 
 const UPSTREAM_TIMEOUT_MS = 8000;
@@ -20,7 +20,7 @@ export default async function handler(req, res, {
     res.status(status).json({ error });
   };
   const resort = RESORTS.find((r) => r.id === req.query?.resort);
-  if (!resort) return fail(404, 'unknown-resort');
+  if (!resort || isJapan(resort)) return fail(404, 'unknown-resort'); // 길찾기는 국내 출발 기준이라 일본은 다루지 않는다
   if (typeof req.url === 'string' && req.url !== `/api/traffic?resort=${resort.id}`) return fail(400, 'bad-request');
   if (!key) return fail(503, 'no-key');
 

@@ -5,13 +5,37 @@ import { RESORTS } from '../js/data.js';
 
 const byId = Object.fromEntries(RESORTS.map((r) => [r.id, r]));
 
-test('13곳, id 중복 없음', () => {
-  assert.equal(RESORTS.length, 13);
-  assert.equal(new Set(RESORTS.map((r) => r.id)).size, 13);
+const KR = RESORTS.filter((r) => r.country !== 'jp');
+const JP = RESORTS.filter((r) => r.country === 'jp');
+
+test('국내 13곳 + 일본 12곳, id 중복 없음', () => {
+  assert.equal(KR.length, 13);
+  assert.equal(JP.length, 12);
+  assert.equal(new Set(RESORTS.map((r) => r.id)).size, 25);
+});
+
+test('일본 스키장: 국내 뒤에 모여 있고, 유튜브 카메라와 지역 이름을 가진다', () => {
+  assert.deepEqual(RESORTS.slice(13), JP);
+  const ids = new Set();
+  for (const r of JP) {
+    assert.equal(r.mode, 'direct', r.id);
+    assert.ok(r.area, r.id);
+    assert.ok(r.cams.length >= 1, r.id);
+    assert.match(r.id, /^[a-z0-9-]+$/, r.id);
+    assert.ok(r.lat > 30 && r.lat < 46 && r.lon > 129 && r.lon < 146, r.id);
+    for (const cam of r.cams) {
+      assert.ok(cam.name, r.id);
+      assert.equal(cam.type, 'youtube', r.id);
+      assert.match(cam.src, /^[\w-]{11}$/, r.id);
+      assert.ok(!ids.has(cam.src), `${r.id} ${cam.src} 중복`);
+      ids.add(cam.src);
+    }
+  }
+  assert.equal(ids.size, 43);
 });
 
 test('방식별 분류', () => {
-  const ids = (mode) => RESORTS.filter((r) => r.mode === mode).map((r) => r.id).sort();
+  const ids = (mode) => KR.filter((r) => r.mode === mode).map((r) => r.id).sort();
   assert.deepEqual(ids('direct'), ['alpensia', 'jisan', 'oakvalley', 'phoenix', 'welli', 'yongpyong']);
   assert.deepEqual(ids('official'), ['elysian', 'high1', 'konjiam', 'muju', 'o2', 'vivaldi']);
   assert.deepEqual(ids('none'), ['eden']);
@@ -39,9 +63,9 @@ test('공식 연결 스키장은 카메라 수만 가진다', () => {
   assert.deepEqual(byId.eden.cams, []);
 });
 
-test('공식 페이지 주소는 모두 https, 좌표는 국내 범위', () => {
-  for (const r of RESORTS) {
-    assert.match(r.officialUrl, /^https:\/\//, r.id);
+test('공식 페이지 주소는 모두 https, 국내 스키장 좌표는 국내 범위', () => {
+  for (const r of RESORTS) assert.match(r.officialUrl, /^https:\/\//, r.id);
+  for (const r of KR) {
     assert.ok(r.lat > 33 && r.lat < 39, r.id);
     assert.ok(r.lon > 124 && r.lon < 131, r.id);
   }

@@ -2,8 +2,12 @@
 // mode: 'direct' 사이트 안에서 재생 / 'official' 공식 웹캠 페이지를 새 탭으로 / 'none' 웹캠 없음
 // 좌표 출처: OpenStreetMap Nominatim 검색 결과 (날씨 조회용)
 // 이 파일에는 IP 주소와 토큰이 든 주소를 적지 않는다.
+// 일본 스키장(country: 'jp')은 2026-11-27 추가. 카메라 목록은 공개 저장소 hletrd/slopes(Apache-2.0)를 참고했고,
+// 유튜브 중계가 살아 있는지는 유튜브 공개 조회로 확인했다. 유튜브 중계는 다시 시작하면 주소(영상 ID)가 바뀐다.
+// 그때는 화면의 공식 페이지 버튼으로 볼 수 있고, 여기 ID 를 새로 적어야 한다.
 
 const hls = (name, src) => ({ name, type: 'hls', src });
+const yt = (name, src) => ({ name, type: 'youtube', src });
 
 const yongpyong = (cam) => `https://live.yongpyong.co.kr/${cam}/index.m3u8`;
 const phoenix = (id) => `https://streaming.phoenixhnr.co.kr/hls/${id}.m3u8`;
@@ -94,7 +98,7 @@ export const RESORTS = [
     lon: 128.6695,
     mode: 'direct',
     officialUrl: 'https://www.alpensia.com/guide/web-cam.do',
-    cams: [{ name: '알펜시아 실시간', type: 'youtube', src: 'Aqlk0xGVoBw' }],
+    cams: [yt('알펜시아 실시간', 'Aqlk0xGVoBw')],
   },
   {
     id: 'oakvalley',
@@ -186,6 +190,183 @@ export const RESORTS = [
     officialUrl: 'https://www.edenvalley.co.kr/main.asp',
     cams: [],
   },
+  // ---------- 일본 ----------
+  {
+    id: 'niseko-village',
+    name: '니세코 빌리지',
+    country: 'jp',
+    area: '홋카이도',
+    lat: 42.8474,
+    lon: 140.6755,
+    mode: 'direct',
+    officialUrl: 'https://www.niseko-village.com/ja/nisekovillage/webcam/',
+    cams: [yt('곤돌라 베이스', 'w1BuUCVYdsQ'), yt('그린 리프', 'WMAL8MGGnRg')],
+  },
+  {
+    id: 'niseko-hanazono',
+    name: '니세코 하나조노',
+    country: 'jp',
+    area: '홋카이도',
+    lat: 42.8933,
+    lon: 140.6974,
+    mode: 'direct',
+    officialUrl: 'https://www.youtube.com/channel/UCrNyeY4kGLL0-Hs8wC98peg',
+    cams: [yt('베이스', '1ksmiy6EsDo')],
+  },
+  {
+    id: 'kiroro',
+    name: '키로로',
+    country: 'jp',
+    area: '홋카이도',
+    lat: 43.0636,
+    lon: 140.9989,
+    mode: 'direct',
+    officialUrl: 'https://www.kiroro.co.jp/livecamera/',
+    cams: [
+      yt('베이스', 'q96NwhD6Lrw'),
+      yt('아사리 정상', 'qtU23CdE7mU'),
+      yt('나가미네 제2구역', 'RVblxnP4Ry8'),
+      yt('24시간 적설계', 'Y3bXHw8TA2o'),
+    ],
+  },
+  {
+    id: 'zao',
+    name: '자오 온천',
+    country: 'jp',
+    area: '도호쿠',
+    lat: 38.1613,
+    lon: 140.4077,
+    mode: 'direct',
+    officialUrl: 'https://www.youtube.com/channel/UC1xeTccsAQdz7-fF0eAa5HA/streams',
+    cams: [
+      yt('중앙 슬로프', '416KwGEjTK4'),
+      yt('JUPEER 슬로프', 'D4YiBKIsZVA'),
+      yt('요코쿠라 슬로프', 'RHfXwQ-rF24'),
+      yt('선라이즈 슬로프', 'G-wKM6Dw3kA'),
+      yt('주효코겐역', 'rpHUbj-7pR0'),
+      yt('로프웨이 주차장', 'Rs4CcR79sWA'),
+      yt('오모리 주차장', '6cR55F-J4ps'),
+      yt('중앙 로프웨이 제1주차장', '1vhtYFrjxBw'),
+      yt('우와노다이 제1주차장', 'DnrgCsF1nAM'),
+    ],
+  },
+  {
+    id: 'marunuma',
+    name: '마루누마 고원',
+    country: 'jp',
+    area: '간토',
+    lat: 36.8115,
+    lon: 139.3464,
+    mode: 'direct',
+    officialUrl: 'https://www.marunuma.jp/winter/live/',
+    cams: [
+      yt('옐로우 코스 1400m', 'JKcKxGeV0KY'),
+      yt('바이올렛 코스 1500m', 'cqvEOhOzN2o'),
+      yt('천공 테라스 2000m', 'l3AEMkq3jP4'),
+      yt('닛코시라네산', '0Q2YZBnp7vk'),
+      yt('돈판 레스토랑', 'Xd5ssXY_BVA'),
+      yt('트리 어드벤처', '0dscZRUP6Rg'),
+      yt('입구', 'QXtbSWXGamE'),
+    ],
+  },
+  {
+    id: 'oze-iwakura',
+    name: '오제 이와쿠라',
+    country: 'jp',
+    area: '간토',
+    lat: 36.8223,
+    lon: 139.2066,
+    mode: 'direct',
+    officialUrl: 'https://www.oze-iwakura.co.jp/ski/slopeguide/live/',
+    cams: [
+      yt('로맨스 / 챔피언 A', '4wYgmnaMAaY'),
+      yt('국제여자 / 리젠 / 엑스퍼트', 'Isvsz0lBjrk'),
+      yt('곤돌라 하부역', 'bB5w9bVNA9s'),
+      yt('곤돌라 정상역', 'TDTe8m3Z1MY'),
+      yt('니시야마 / 호른 레스토랑', 'yLmHCuy4Wlg'),
+    ],
+  },
+  {
+    id: 'kusatsu',
+    name: '구사쓰 온천',
+    country: 'jp',
+    area: '간토',
+    lat: 36.631,
+    lon: 138.5781,
+    mode: 'direct',
+    officialUrl: 'https://www.932-onsen.com/common/live/',
+    cams: [
+      yt('덴구야마 베이스', 'eX7vAL4Jtfk'),
+      yt('덴구야마 정상', 'hN8mxz3-1pg'),
+      yt('국도 292호 입구', 'rHuoK_TWOnA'),
+    ],
+  },
+  {
+    id: 'happo-one',
+    name: '하쿠바 핫포네',
+    country: 'jp',
+    area: '주부',
+    lat: 36.7036,
+    lon: 137.8226,
+    mode: 'direct',
+    officialUrl: 'https://www.happo-one.jp/gelande/livecamera/',
+    cams: [
+      yt('우사기다이라', '9ej1bDX8Kd8'),
+      yt('파노라마', '8xqRaPJX_N4'),
+      yt('구로비시 1678m', '21HCv58C99o'),
+      yt('시라카바 하단', 'hMY3VnL4Pyk'),
+      yt('제3주차장', 'BHo4tHKIDow'),
+    ],
+  },
+  {
+    id: 'shigakogen',
+    name: '시가 고원',
+    country: 'jp',
+    area: '주부',
+    lat: 36.6789,
+    lon: 138.4957, // 구마노유 스키장
+    mode: 'direct',
+    officialUrl: 'https://www.shigakogen.gr.jp/live/index.html',
+    cams: [yt('구마노유 베이스', 'n4G4iQTme1g')],
+  },
+  {
+    id: 'yachiho',
+    name: '야치호 고원',
+    country: 'jp',
+    area: '주부',
+    lat: 36.0688,
+    lon: 138.3756,
+    mode: 'direct',
+    officialUrl: 'https://yachiho-kogen.com/ski/manage25-26/index5_1-4-2.shtml',
+    cams: [
+      yt('스키장 전경', '-Mn-s1mwG94'),
+      yt('제2리프트', 'K75FL2PHBw4'),
+      yt('4코스', '03BYfh9kP24'),
+      yt('제1 / 아니카 방면', 'SQaPmIFqPD4'),
+    ],
+  },
+  {
+    id: 'karuizawa',
+    name: '가루이자와 프린스',
+    country: 'jp',
+    area: '주부',
+    lat: 36.3364,
+    lon: 138.6434,
+    mode: 'direct',
+    officialUrl: 'https://www.youtube.com/channel/UCnXXZnHcM2Y-WX7U_fNR2Qg',
+    cams: [yt('베이스', 'fqgXBt2ZzpE')],
+  },
+  {
+    id: 'arai',
+    name: '롯데 아라이',
+    country: 'jp',
+    area: '주부',
+    lat: 36.9909,
+    lon: 138.1816,
+    mode: 'direct',
+    officialUrl: 'https://www.youtube.com/channel/UCykbn5kKdajksZb7C0UyY7A/streams',
+    cams: [yt('롯폰기 스테이션', 'kQskivhwAwE')],
+  },
 ];
 
 // 휴대폰(iOS·Android)에서는 모바일 전용 공식 페이지가 있으면 그 주소를 쓴다.
@@ -193,3 +374,5 @@ export function officialUrlFor(resort, os) {
   const isPhone = os === 'ios' || os === 'android';
   return (isPhone && resort.officialUrlMobile) || resort.officialUrl;
 }
+
+export const isJapan = (resort) => resort.country === 'jp';

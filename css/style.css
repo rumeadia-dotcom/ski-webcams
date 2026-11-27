@@ -169,6 +169,9 @@ a { text-underline-offset: 3px; }
 .row + .row { border-top: 1px solid var(--line); }
 /* 즐겨찾기와 나머지 사이는 띠로 나눈다. */
 .row.is-rest-start { border-top: 8px solid var(--bg); }
+/* 나라 구분 제목. 즐겨찾기 띠와 같은 바탕 위에 작은 글자로 둔다. */
+.row-group { border-top: 1px solid var(--line); background: var(--bg); }
+.row-group-title { margin: 0; padding: 14px 16px 8px; font-size: 13px; font-weight: 600; color: var(--muted); }
 /* 목록 테두리 안에서 포커스 표시가 잘리지 않게 안쪽에 그린다. */
 .list :focus-visible { outline-offset: -3px; border-radius: 12px; }
 

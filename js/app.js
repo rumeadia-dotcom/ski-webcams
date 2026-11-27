@@ -1,4 +1,4 @@
-import { RESORTS, officialUrlFor } from './data.js';
+import { RESORTS, officialUrlFor, isJapan } from './data.js';
 import { loadFavorites, toggleFavorite, sortResorts } from './favorites.js';
 import { getWeather, lastWeatherError, weatherNote, amountLabel, boardWeather } from './weather.js';
 import { detectEnv } from './browser.js';
@@ -104,7 +104,8 @@ function dayLabel(day) {
 
 // 목록에서 이 스키장을 누르면 무엇이 나오는지 미리 알려 준다.
 function camSummary(resort) {
-  if (resort.mode === 'direct') return h('span', { class: 'row-sub is-live' }, `바로 재생 · 카메라 ${resort.cams.length}`);
+  const area = resort.area ? `${resort.area} · ` : ''; // 일본은 지역 이름을 앞에 붙인다
+  if (resort.mode === 'direct') return h('span', { class: 'row-sub is-live' }, `${area}바로 재생 · 카메라 ${resort.cams.length}`);
   if (resort.mode === 'official') return h('span', { class: 'row-sub' }, `공식 페이지 · 카메라 ${resort.camCount}`);
   return h('span', { class: 'row-sub' }, '웹캠 없음');
 }
@@ -220,7 +221,11 @@ function listWeather(resort) {
 function renderList() {
   document.title = '스키장 웹캠';
   const favCount = RESORTS.filter((r) => state.favorites.includes(r.id)).length;
-  const rows = sortResorts(RESORTS, state.favorites).map((resort, i) =>
+  const sorted = sortResorts(RESORTS, state.favorites);
+  // 즐겨찾기 아래에서 일본 스키장이 시작되는 자리에 구분 제목을 넣는다.
+  const japanStart = sorted.findIndex((resort, i) => i >= favCount && isJapan(resort));
+  const rows = sorted.flatMap((resort, i) => [
+    i === japanStart ? h('li', { class: 'row-group' }, h('h2', { class: 'row-group-title' }, '일본')) : null,
     h('li', { class: `row${favCount > 0 && i === favCount ? ' is-rest-start' : ''}${state.weather?.[resort.id]?.kind === 'snow' ? ' snowfall' : ''}` },
       favButton(resort, renderList),
       h('a', { class: 'row-link', href: `#/resort/${resort.id}` },
@@ -231,7 +236,7 @@ function renderList() {
         listWeather(resort),
       ),
     ),
-  );
+  ]).filter(Boolean);
   mount(
     h('header', { class: 'top' },
       h('h1', { class: 'brand', tabindex: '-1' }, '스키장 웹캠',
@@ -576,7 +581,7 @@ function renderDetail(resort, firstCam) {
     // 세 묶음: 보기(영상·요약·카메라), 날씨, 교통. 묶음 안은 촘촘하게, 묶음 사이는 넉넉하게 둔다.
     h('main', { class: 'detail' },
       board.el ? h('div', { class: 'watch' }, stage[0], board.el, ...stage.slice(1)) : stage,
-      weatherSlot, trafficSection(resort)),
+      weatherSlot, isJapan(resort) ? null : trafficSection(resort)), // 교통은 국내 출발 기준이라 일본에는 없다
     footer(),
   );
   drawBoard();

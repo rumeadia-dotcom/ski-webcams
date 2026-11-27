@@ -37,11 +37,11 @@ test('날씨 코드 분류', () => {
   assert.equal(weatherKind(undefined), 'cloudy');
 });
 
-test('호출 주소에 필수 조건과 좌표 13쌍이 들어간다', () => {
+test('호출 주소에 필수 조건과 좌표가 스키장 수만큼이 들어간다', () => {
   const url = new URL(buildWeatherUrl(RESORTS));
   assert.equal(url.origin + url.pathname, 'https://api.open-meteo.com/v1/forecast');
-  assert.equal(url.searchParams.get('latitude').split(',').length, 13);
-  assert.equal(url.searchParams.get('longitude').split(',').length, 13);
+  assert.equal(url.searchParams.get('latitude').split(',').length, RESORTS.length);
+  assert.equal(url.searchParams.get('longitude').split(',').length, RESORTS.length);
   assert.equal(url.searchParams.get('past_days'), '3');
   assert.equal(url.searchParams.get('forecast_days'), '8'); // 오늘 + 앞으로 7일
   assert.equal(url.searchParams.get('timezone'), 'Asia/Seoul');
@@ -97,7 +97,7 @@ test('저장소가 막혀 있거나 캐시가 깨져도 동작', async () => {
   const body = [location(1, 0), location(2, 0)];
   const w = await getWeather({ fetch: okFetch(body), storage: throwing, now: () => 1, resorts: two });
   assert.equal(w.b.temp, 2);
-  const broken = memoryStorage({ 'ski.weather.v2': '{nope' });
+  const broken = memoryStorage({ 'ski.weather.v3': '{nope' });
   const w2 = await getWeather({ fetch: okFetch(body), storage: broken, now: () => 1, resorts: two });
   assert.equal(w2.a.temp, 1);
 });
@@ -118,10 +118,10 @@ test('저장소 접근 자체가 예외를 던지는 환경에서도 날씨를 �
 test('형태가 맞지 않거나 미래 시각인 캐시는 버린다', async () => {
   const body = [location(1, 0), location(2, 0)];
   const counter = { n: 0 };
-  const bad = memoryStorage({ 'ski.weather.v2': JSON.stringify({ at: 1000, data: { a: {} } }) });
+  const bad = memoryStorage({ 'ski.weather.v3': JSON.stringify({ at: 1000, data: { a: {} } }) });
   const w = await getWeather({ fetch: okFetch(body, counter), storage: bad, now: () => 1000, resorts: two });
   assert.equal(w.a.temp, 1);
-  const future = memoryStorage({ 'ski.weather.v2': JSON.stringify({ at: 9_999_999, data: w }) });
+  const future = memoryStorage({ 'ski.weather.v3': JSON.stringify({ at: 9_999_999, data: w }) });
   await getWeather({ fetch: okFetch(body, counter), storage: future, now: () => 1000, resorts: two });
   assert.equal(counter.n, 2);
 });

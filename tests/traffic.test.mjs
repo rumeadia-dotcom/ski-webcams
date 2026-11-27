@@ -187,3 +187,11 @@ test('서버 기능: 정해진 주소는 그대로 처리한다', async () => {
   assert.equal(res.code, 200);
   assert.equal(calls.length, 7);
 });
+
+test('서버 기능: 일본 스키장은 카카오를 부르지 않고 거절한다', async () => {
+  const calls = [];
+  const res = fakeRes();
+  await handler({ url: '/api/traffic?resort=kiroro', query: { resort: 'kiroro' } }, res, { key: 'k', fetch: okFetch(calls) });
+  assert.equal(res.code, 404);
+  assert.equal(calls.length, 0);
+});
